@@ -1,0 +1,72 @@
+package co.com.bancolombia.api.router;
+
+import co.com.bancolombia.api.dto.request.LoanApplicationRequestDto;
+import co.com.bancolombia.api.dto.response.LoanApplicationResponseDto;
+import co.com.bancolombia.api.handler.HandlerLoanApplication;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.springdoc.core.annotations.RouterOperation;
+import org.springdoc.core.annotations.RouterOperations;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.ServerResponse;
+
+import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
+import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
+import static org.springframework.web.reactive.function.server.RouterFunctions.route;
+
+@Configuration
+public class RouterRestLoanApplication {
+    @Bean
+    @RouterOperations({
+            @RouterOperation(
+                    path = "/api/v1/solicitudes",
+                    method = RequestMethod.GET,
+                    beanClass = HandlerLoanApplication.class,
+                    beanMethod = "GetLoanApplication",
+                    operation = @Operation(
+                            summary = "Get all loan application",
+                            responses = {
+                                    @ApiResponse(responseCode = "200", description = "OK")
+                            }
+                    )
+            ),
+            @RouterOperation(
+                    path = "/api/v1/solicitudes",
+                    method = RequestMethod.POST,
+                    beanClass = HandlerLoanApplication.class,
+                    beanMethod = "CreateLoanApplication",
+                    consumes = "application/json",
+                    produces = "application/json",
+                    operation = @Operation(
+                            operationId = "createLoanApplication",
+                            summary = "Create a new loan application",
+                            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                                    description = "Loan application to create",
+                                    required = true,
+                                    content = @Content(
+                                            mediaType = "application/json",
+                                            schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = LoanApplicationRequestDto.class)
+                                    )
+                            ),
+                            responses = {
+                                    @ApiResponse(
+                                            responseCode = "201",
+                                            description = "Loan application created",
+                                            content = @Content(
+                                                    mediaType = "application/json",
+                                                    schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = LoanApplicationResponseDto.class))
+                                    ),
+                                    @ApiResponse(responseCode = "409", description = "Loan application already exists")
+                            }
+                    )
+            )
+    })
+    public RouterFunction<ServerResponse> routerFunction(HandlerLoanApplication handlerLoanApplication) {
+        return route(GET("/api/v1/solicitudes"), handlerLoanApplication::GetLoanApplication)
+                .andRoute(POST("/api/v1/solicitudes"), handlerLoanApplication::CreateLoanApplication);
+    }
+}

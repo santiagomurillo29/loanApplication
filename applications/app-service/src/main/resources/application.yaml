@@ -1,0 +1,43 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: "LoanApplication"
+  devtools:
+    add-properties: false
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/LoanApplication
+    username: postgres
+    password: 30052630
+  sql:
+    init:
+      mode: always
+    data:
+      r2dbc:
+        repositories:
+          enabled: true
+
+adapters:
+  r2dbc:
+    host: localhost
+    port: 5432
+    database: LoanApplication
+    schema: public
+    username: postgres
+    password: 30052630
+
+services:
+  authentication:
+    url: http://localhost:8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,prometheus"
+  endpoint:
+    health:
+      probes:
+        enabled: true
+cors:
+  allowed-origins: "http://localhost:4200,http://localhost:8080"
