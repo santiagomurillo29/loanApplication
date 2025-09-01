@@ -1,4 +1,4 @@
-package co.com.bancolombia.r2dbc.anthenticationclient.model;
+package co.com.bancolombia.consumer.anthenticationclient.model;
 
 import lombok.Data;
 import java.math.BigDecimal;

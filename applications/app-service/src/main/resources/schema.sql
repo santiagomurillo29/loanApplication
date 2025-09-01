@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS loan_type (
 
 CREATE TABLE IF NOT EXISTS loan_application (
     id_loan_application BIGSERIAL PRIMARY KEY,
-    amount NUMERIC(20,2),
+    amount NUMERIC(20,2) NOT NULL,
     term INT NOT NULL,
     email VARCHAR(150) NOT NULL,
     id_state BIGINT NOT NULL DEFAULT 1,
@@ -24,12 +24,12 @@ CREATE TABLE IF NOT EXISTS loan_application (
     FOREIGN KEY (id_loan_type) REFERENCES loan_type(id_loan_type)
 );
 
-INSERT INTO STATE (name, description) VALUES
+INSERT INTO state (name, description) VALUES
 ('PENDING', 'Loan application pending review'),
 ('APPROVED', 'Loan application approved'),
 ('REJECTED', 'Loan application rejected');
 
-INSERT INTO LOAN_TYPE (name, min_amount, max_amount, interest_rate, auto_validation) VALUES
-('Personal Loan', 500.00, 10000.00, 12.50, TRUE),
+INSERT INTO loan_type (name, min_amount, max_amount, interest_rate, auto_validation) VALUES
+('Personal Loan', 5000.00, 10000.00, 12.50, TRUE),
 ('Car Loan', 1000.00, 20000.00, 10.00, FALSE),
 ('Mortgage', 5000.00, 50000.00, 8.50, FALSE);

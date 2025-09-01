@@ -10,12 +10,13 @@ public class LoanApplicationModel {
     private StateModel state;
     private LoanTypeModel loanType;
 
-    public LoanApplicationModel(StateModel state, String email, LoanTypeModel loanType, Integer term, BigDecimal amount, Long idLoanApplication) {
-        this.state = state;
-        this.email = email;
-        this.loanType = loanType;
-        this.term = term;
+    public LoanApplicationModel(Long idLoanApplication, BigDecimal amount, Integer term, String email, StateModel state, LoanTypeModel loanType) {
         this.idLoanApplication = idLoanApplication;
+        this.amount = amount;
+        this.term = term;
+        this.email = email;
+        this.state = state;
+        this.loanType = loanType;
     }
 
     public Long getIdLoanApplication() {

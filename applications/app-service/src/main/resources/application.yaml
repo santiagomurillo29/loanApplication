@@ -6,30 +6,27 @@ spring:
   devtools:
     add-properties: false
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/LoanApplication
-    username: postgres
+    url: "r2dbc:postgresql://localhost:5432/LoanApplication"
+    username: "postgres"
     password: 30052630
   sql:
     init:
-      mode: always
+      mode: "always"
     data:
       r2dbc:
         repositories:
           enabled: true
-
 adapters:
   r2dbc:
-    host: localhost
+    host: "localhost"
     port: 5432
-    database: LoanApplication
-    schema: public
-    username: postgres
+    database: "LoanApplication"
+    schema: "public"
+    username: "postgres"
     password: 30052630
-
 services:
   authentication:
-    url: http://localhost:8080
-
+    url: "http://localhost:8080"
 management:
   endpoints:
     web:
@@ -39,5 +36,33 @@ management:
     health:
       probes:
         enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
 cors:
   allowed-origins: "http://localhost:4200,http://localhost:8080"
+adapter:
+  restconsumer:
+    timeout: 5000
+    url: "http://localhost:8080"
+resilience4j:
+  circuitbreaker:
+    instances:
+      testGet:
+        registerHealthIndicator: true
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: "2s"
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: "10s"
+      testPost:
+        registerHealthIndicator: true
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: "2s"
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: "10s"

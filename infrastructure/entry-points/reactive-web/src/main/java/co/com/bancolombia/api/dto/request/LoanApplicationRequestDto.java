@@ -2,6 +2,7 @@ package co.com.bancolombia.api.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -21,8 +22,9 @@ import java.math.BigDecimal;
 public class LoanApplicationRequestDto {
 
     @Schema(description = "LoanApplication's amount", example = "500000")
-    //@NotNull(message = "The amount must not be null")
-    @DecimalMin(value = "1000.0", inclusive = true, message = "The amount must be at least 1000")
+    @NotNull(message = "The amount must not be null")
+    @DecimalMin(value = "1000", inclusive = true, message = "The amount must be at least 1000")
+    @Digits(integer = 15, fraction = 2, message = "The amount must have up to 15 digits and 2 decimals")
     private BigDecimal amount;
 
     @Schema(description = "LoanApplication's term", example = "24")

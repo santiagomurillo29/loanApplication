@@ -5,6 +5,8 @@ import co.com.bancolombia.model.loanapplication.gateways.LoanApplicationPersiste
 import co.com.bancolombia.r2dbc.adapter.LoanApplicationAdapterR2dbc;
 import co.com.bancolombia.r2dbc.health.R2dbcSafeExecutor;
 import co.com.bancolombia.r2dbc.mapper.LoanApplicationMapperR2dbc;
+import co.com.bancolombia.r2dbc.mapper.LoanTypeMapperR2dbc;
+import co.com.bancolombia.r2dbc.mapper.StateMapperR2dbc;
 import co.com.bancolombia.r2dbc.repository.LoanApplicationRepository;
 import co.com.bancolombia.r2dbc.repository.LoanTypeRepository;
 import co.com.bancolombia.r2dbc.repository.StateRepository;
@@ -23,6 +25,8 @@ public class UseCasesConfig {
         private final StateRepository stateRepository;
         private final LoanTypeRepository loanTypeRepository;
         private final LoanApplicationMapperR2dbc loanApplicationMapperR2dbc;
+        private final LoanTypeMapperR2dbc loanTypeMapperR2dbc;
+        private final StateMapperR2dbc stateMapperR2dbc;
 
         @Bean
         public LoanApplicationPersistencePort loanApplicationPersistencePort(){
@@ -31,6 +35,8 @@ public class UseCasesConfig {
                         loanTypeRepository,
                         stateRepository,
                         loanApplicationMapperR2dbc,
+                        loanTypeMapperR2dbc,
+                        stateMapperR2dbc,
                         r2dbcSafeExecutor
                 );
         }

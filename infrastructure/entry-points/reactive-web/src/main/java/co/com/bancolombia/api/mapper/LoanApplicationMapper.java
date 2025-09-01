@@ -12,11 +12,11 @@ public interface LoanApplicationMapper {
     @Mapping(target = "idLoanApplication", ignore = true)
     @Mapping(target = "state.idState", ignore = true)
     @Mapping(target = "loanType.idLoanType", source = "idLoanType")
-    @Mapping(target = "amount", source = "amount")
     LoanApplicationModel toModelLoanApplication(LoanApplicationRequestDto loanApplicationRequestDto);
 
     @Mapping(target = "idState", source = "state.idState")
+    @Mapping(target = "nameState", source = "state.name")
     @Mapping(target = "idLoanType", source = "loanType.idLoanType")
-    @Mapping(target = "amount", source = "amount")
+    @Mapping(target = "nameLoanType", source = "loanType.name")
     LoanApplicationResponseDto toDtoLoanApplication(LoanApplicationModel loanApplicationModel);
 }
