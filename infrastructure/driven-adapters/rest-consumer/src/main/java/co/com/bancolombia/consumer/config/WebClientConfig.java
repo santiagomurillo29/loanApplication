@@ -1,4 +1,4 @@
-package co.com.bancolombia.r2dbc.anthenticationclient.config;
+package co.com.bancolombia.consumer.config;
 
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;

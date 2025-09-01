@@ -24,9 +24,15 @@ public class LoanApplicationResponseDto {
     @Schema(description = "User's email", example = "string@gmail.com")
     private String email;
 
+    @Schema(description = "Number of loan type", example = "1")
+    private Long idLoanType;
+
+    @Schema(description = "Name of loan type", example = "string")
+    private String nameLoanType;
+
     @Schema(description = "Number of state", example = "1")
     private Long idState;
 
-    @Schema(description = "Number of loan type", example = "1")
-    private Long idLoanType;
+    @Schema(description = "Name of state", example = "string")
+    private String nameState;
 }

@@ -23,19 +23,15 @@ public class LoanApplicationUseCase implements LoanApplicationServicePort {
                     if (!exists) {
                         return Mono.error(new BusinessException(GlobalMessage.NOT_FOUND_EMAIL));
                     }
-                    return loanApplicationPersistencePort.existsLoanTypeById(loanApplicationModel.getLoanType().getIdLoanType());
+                    return loanApplicationPersistencePort.findLoanTypeById(loanApplicationModel.getLoanType().getIdLoanType());
                 })
-                .flatMap(exists -> {
-                    if (!exists) {
-                        return Mono.error(new BusinessException(GlobalMessage.NOT_FOUND_LOAN_TYPE));
-                    }
-                    return loanApplicationPersistencePort.existsStateByName("PENDING");
+                .flatMap(loanTypeModel -> {
+                    loanApplicationModel.setLoanType(loanTypeModel);
+                    return loanApplicationPersistencePort.findStateByName("PENDING")
+                            .switchIfEmpty(Mono.error(new BusinessException(GlobalMessage.NOT_FOUND_STATE)));
                 })
-                .flatMap(exists -> {
-                    if (!exists) {
-                        return Mono.error(new BusinessException(GlobalMessage.NOT_FOUND_STATE));
-                    }
-                    loanApplicationModel.setState(new StateModel(null, "PENDING", null));
+                .flatMap(state -> {
+                    loanApplicationModel.setState(state);
                     return loanApplicationPersistencePort.saveLoanApplication(loanApplicationModel);
                 });
     }

@@ -7,7 +7,7 @@ import co.com.bancolombia.r2dbc.entity.LoanApplicationEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring",uses = {LoanTypeMapperR2dbc.class, StateMapperR2dbc.class})
 public interface LoanApplicationMapperR2dbc {
 
     @Mapping(target = "idState", source = "state.idState")

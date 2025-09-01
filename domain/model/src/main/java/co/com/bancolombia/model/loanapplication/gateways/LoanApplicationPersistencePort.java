@@ -7,6 +7,6 @@ import reactor.core.publisher.Mono;
 
 public interface LoanApplicationPersistencePort {
     Mono<LoanApplicationModel> saveLoanApplication(LoanApplicationModel loanApplicationModel);
-    Mono<Boolean> existsLoanTypeById(Long idLoanType);
-    Mono<Boolean> existsStateByName(String name);
+    Mono<LoanTypeModel> findLoanTypeById(Long idLoanType);
+    Mono<StateModel> findStateByName(String name);
 }

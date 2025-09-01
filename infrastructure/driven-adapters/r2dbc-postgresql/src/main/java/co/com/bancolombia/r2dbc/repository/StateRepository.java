@@ -5,5 +5,5 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Mono;
 
 public interface StateRepository extends ReactiveCrudRepository<StateEntity, Long> {
-    Mono<Boolean> existsByName(String name);
+    Mono<StateEntity> findByName(String name);
 }

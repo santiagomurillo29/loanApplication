@@ -1,9 +1,9 @@
 package co.com.bancolombia.api.handlerexception;
 
 import co.com.bancolombia.api.dto.response.exception.ErrorResponseBodyDto;
+import co.com.bancolombia.consumer.exception.WebClientException;
 import co.com.bancolombia.model.loanapplication.globalmessage.GlobalMessage;
 import co.com.bancolombia.r2dbc.exception.DataBaseException;
-import co.com.bancolombia.r2dbc.exception.WebClientException;
 import co.com.bancolombia.usecase.loanapplication.exception.BusinessException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
