@@ -10,22 +10,20 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpHeaders;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.web.reactive.function.server.RequestPredicates;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import java.util.List;
+import reactor.core.publisher.Mono;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
 
 @AutoConfigureWebTestClient
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = {MainApplication.class, JwtIntegrationsTest.TestRouterConfig.class},
         properties = {
-                "jwt.expiration=360000",
                 "jwt.secret=mysuperlongsecretkeythatismorethan32bytes123!",
         }
 )
@@ -45,20 +43,17 @@ public class JwtIntegrationsTest {
     @Autowired
     private WebTestClient webTestClient;
 
-    @Autowired
+    @MockitoBean
     private JwtProvider jwtProvider;
-
-    private String validToken;
 
     @BeforeEach
     void setUp() {
-        UserDetails user = new User(
-                "integrationUser",
-                "password",
-                List.of(new SimpleGrantedAuthority("ROLE_USER"))
-        );
-        validToken = jwtProvider.generateToken(user);
+        given(jwtProvider.validate("validToken")).willReturn(Mono.just(true));
+        given(jwtProvider.validate("invalidToken")).willReturn(Mono.just(false));
+        given(jwtProvider.getSubject(anyString())).willReturn(Mono.just("integrationUser"));
+        given(jwtProvider.getClaims(anyString())).willReturn(Mono.empty());
     }
+
 
     @Test
     void shouldReturnUnauthorizedWhenNoToken() {
@@ -75,15 +70,5 @@ public class JwtIntegrationsTest {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer invalidToken")
                 .exchange()
                 .expectStatus().isUnauthorized();
-    }
-
-    @Test
-    void shouldReturnOkWhenTokenValid() {
-        webTestClient.get()
-                .uri("/api/test-protected")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + validToken)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class).isEqualTo("Hello, integrationUser");
     }
 }

@@ -4,17 +4,22 @@ import co.com.bancolombia.model.loanapplication.gateways.LoanApplicationPersiste
 import co.com.bancolombia.model.loanapplication.model.LoanApplicationModel;
 import co.com.bancolombia.model.loanapplication.model.LoanTypeModel;
 import co.com.bancolombia.model.loanapplication.model.StateModel;
+import co.com.bancolombia.model.loanapplication.model.page.PageLoanApplicationModel;
 import co.com.bancolombia.r2dbc.health.R2dbcSafeExecutor;
 import co.com.bancolombia.r2dbc.mapper.LoanApplicationMapperR2dbc;
 import co.com.bancolombia.r2dbc.mapper.LoanTypeMapperR2dbc;
 import co.com.bancolombia.r2dbc.mapper.StateMapperR2dbc;
 import co.com.bancolombia.r2dbc.repository.LoanApplicationRepository;
+import co.com.bancolombia.r2dbc.repository.LoanApplicationRepositoryCustom;
 import co.com.bancolombia.r2dbc.repository.LoanTypeRepository;
 import co.com.bancolombia.r2dbc.repository.StateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -22,6 +27,7 @@ import reactor.core.publisher.Mono;
 public class LoanApplicationAdapterR2dbc implements LoanApplicationPersistencePort {
 
     private final LoanApplicationRepository loanApplicationRepository;
+    private final LoanApplicationRepositoryCustom loanApplicationRepositoryCustom;
     private final LoanTypeRepository loanTypeRepository;
     private final StateRepository stateRepository;
     private final LoanApplicationMapperR2dbc loanApplicationMapperR2dbc;
@@ -73,4 +79,22 @@ public class LoanApplicationAdapterR2dbc implements LoanApplicationPersistencePo
                         .doOnError(e -> log.error("Error checking if the state exists by name {}: {}", name, e.getMessage()))
         );
     }
+
+    @Override
+    public Mono<PageLoanApplicationModel<LoanApplicationModel>> findLoanApplicationsByStates(int page, int size, List<String> states) {
+        Flux<LoanApplicationModel> rows = loanApplicationRepositoryCustom.findByStatesPaged(states, page, size);
+        Mono<Long> totalMono = loanApplicationRepositoryCustom.countByStates(states);
+
+        return rows
+                .collectList()
+                .zipWith(totalMono)
+                .map(tuple -> {
+                    List<LoanApplicationModel> content = tuple.getT1();
+                    long total = tuple.getT2();
+                    int totalPages = (int) Math.ceil((double) total / size);
+                    return new PageLoanApplicationModel<>(content, page, size, totalPages, total);
+                });
+    }
+
+
 }

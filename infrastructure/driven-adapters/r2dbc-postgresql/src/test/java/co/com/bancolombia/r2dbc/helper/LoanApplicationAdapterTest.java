@@ -12,6 +12,7 @@ import co.com.bancolombia.r2dbc.mapper.LoanApplicationMapperR2dbc;
 import co.com.bancolombia.r2dbc.mapper.LoanTypeMapperR2dbc;
 import co.com.bancolombia.r2dbc.mapper.StateMapperR2dbc;
 import co.com.bancolombia.r2dbc.repository.LoanApplicationRepository;
+import co.com.bancolombia.r2dbc.repository.LoanApplicationRepositoryCustom;
 import co.com.bancolombia.r2dbc.repository.LoanTypeRepository;
 import co.com.bancolombia.r2dbc.repository.StateRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.function.Supplier;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -32,6 +34,7 @@ import static reactor.test.StepVerifier.create;
 public class LoanApplicationAdapterTest {
 
     @Mock private LoanApplicationRepository loanApplicationRepository;
+    @Mock private LoanApplicationRepositoryCustom loanApplicationRepositoryCustom;
     @Mock private LoanTypeRepository loanTypeRepository;
     @Mock private StateRepository stateRepository;
     @Mock private LoanApplicationMapperR2dbc loanApplicationMapperR2dbc;
@@ -44,6 +47,7 @@ public class LoanApplicationAdapterTest {
     void setUp() {
         adapter = new LoanApplicationAdapterR2dbc(
                 loanApplicationRepository,
+                loanApplicationRepositoryCustom,
                 loanTypeRepository,
                 stateRepository,
                 loanApplicationMapperR2dbc,
@@ -121,5 +125,38 @@ public class LoanApplicationAdapterTest {
         create(adapter.findLoanTypeById(loanTypeId))
                 .expectNext(loanTypeModel)
                 .verifyComplete();
+    }
+
+    @Test
+    void findLoanApplicationsByStates_returnsPagedResult() {
+        StateModel stateModel = new StateModel("Description", "PENDING", 1L);
+        LoanTypeModel loanTypeModel = new LoanTypeModel(1L, "Personal Loan",
+                BigDecimal.valueOf(5000.00),
+                BigDecimal.valueOf(500000.00),
+                BigDecimal.valueOf(12.50),
+                true);
+
+        LoanApplicationModel loan1 = new LoanApplicationModel(
+                1L, BigDecimal.valueOf(30000.00), 24, "user1@gmail.com", stateModel, loanTypeModel);
+        LoanApplicationModel loan2 = new LoanApplicationModel(
+                2L, BigDecimal.valueOf(40000.00), 12, "user2@gmail.com", stateModel, loanTypeModel);
+
+        when(loanApplicationRepositoryCustom.findByStatesPaged(any(), any(Integer.class), any(Integer.class)))
+                .thenReturn(Flux.just(loan1, loan2));
+        when(loanApplicationRepositoryCustom.countByStates(any()))
+                .thenReturn(Mono.just(2L));
+
+        StepVerifier.create(adapter.findLoanApplicationsByStates(0, 10, List.of("PENDING")))
+                .expectNextMatches(page ->
+                        page.getContent().size() == 2 &&
+                                page.getContent().get(0).getIdLoanApplication().equals(1L) &&
+                                page.getContent().get(1).getIdLoanApplication().equals(2L) &&
+                                page.getCurrentPage() == 0 &&
+                                page.getPageSize() == 10 &&
+                                page.getTotalPages() == 1 &&
+                                page.getTotalElements() == 2
+                )
+                .verifyComplete();
+
     }
 }

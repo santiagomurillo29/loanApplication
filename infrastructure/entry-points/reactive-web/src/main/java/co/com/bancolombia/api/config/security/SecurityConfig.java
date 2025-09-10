@@ -40,10 +40,10 @@ public class SecurityConfig {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/api/v1/login", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**", "/favicon.ico").permitAll()
+                        .pathMatchers("/swagger-ui/**", "/v3/api-docs/**", "/webjars/**", "/favicon.ico").permitAll()
                         .pathMatchers("/auth/**").permitAll()
-                        .pathMatchers(HttpMethod.POST, "/api/v1/usuarios").hasAnyRole("ADMIN", "ASESOR")
-                        .pathMatchers(HttpMethod.GET, "/api/v1/usuarios/**").hasRole("CLIENTE")
+                        .pathMatchers(HttpMethod.POST, "/api/v1/solicitudes").hasRole("CUSTOMER")
+                        .pathMatchers(HttpMethod.GET, "/api/v1/solicitud").hasRole("ADVISOR")
                         .anyExchange().authenticated()
                 )
                 .addFilterAfter(jwtFilter, SecurityWebFiltersOrder.FIRST)

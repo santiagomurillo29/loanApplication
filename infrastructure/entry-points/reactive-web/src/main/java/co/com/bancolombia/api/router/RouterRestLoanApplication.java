@@ -4,7 +4,10 @@ import co.com.bancolombia.api.dto.request.LoanApplicationRequestDto;
 import co.com.bancolombia.api.dto.response.LoanApplicationResponseDto;
 import co.com.bancolombia.api.handler.HandlerLoanApplication;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springdoc.core.annotations.RouterOperation;
 import org.springdoc.core.annotations.RouterOperations;
@@ -23,12 +26,36 @@ public class RouterRestLoanApplication {
     @Bean
     @RouterOperations({
             @RouterOperation(
-                    path = "/api/v1/solicitudes",
+                    path = "/api/v1/solicitud",
                     method = RequestMethod.GET,
                     beanClass = HandlerLoanApplication.class,
                     beanMethod = "GetLoanApplication",
                     operation = @Operation(
-                            summary = "Get all loan application",
+                            operationId = "getLoanApplications",
+                            summary = "Get all loan applications",
+                            parameters = {
+                                    @Parameter(
+                                            name = "page",
+                                            description = "Page number",
+                                            in = ParameterIn.QUERY,
+                                            required = false,
+                                            schema = @Schema(type = "integer", defaultValue = "0")
+                                    ),
+                                    @Parameter(
+                                            name = "size",
+                                            description = "Page size",
+                                            in = ParameterIn.QUERY,
+                                            required = false,
+                                            schema = @Schema(type = "integer", defaultValue = "10")
+                                    ),
+                                    @Parameter(
+                                            name = "state",
+                                            description = "Loan state(s)",
+                                            in = ParameterIn.QUERY,
+                                            required = false,
+                                            schema = @Schema(type = "string", example = "PENDING")
+                                    )
+                            },
                             responses = {
                                     @ApiResponse(responseCode = "200", description = "OK")
                             }
@@ -66,7 +93,7 @@ public class RouterRestLoanApplication {
             )
     })
     public RouterFunction<ServerResponse> routerFunction(HandlerLoanApplication handlerLoanApplication) {
-        return route(GET("/api/v1/solicitudes"), handlerLoanApplication::GetLoanApplication)
+        return route(GET("/api/v1/solicitud"), handlerLoanApplication::GetLoanApplication)
                 .andRoute(POST("/api/v1/solicitudes"), handlerLoanApplication::CreateLoanApplication);
     }
 }

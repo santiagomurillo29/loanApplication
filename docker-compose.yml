@@ -1,0 +1,52 @@
+services:
+  postgres-loan:
+    image: postgres:15
+    container_name: postgres-loan
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: loan_application_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-loan-data:/var/lib/postgresql/data
+    networks:
+      - spring-network
+
+  pgadmin-loan:
+    image: dpage/pgadmin4
+    container_name: pgadmin-loan
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8082:80"
+    networks:
+      - spring-network
+    depends_on:
+      - postgres-loan
+
+  loan_application:
+    image: loan_application
+    container_name: loan_application
+    build:
+      context: .
+      dockerfile: Dockerfile
+      no_cache: true
+    depends_on:
+      - postgres-loan
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://postgres-loan:5432/loan_application_db
+      SPRING_R2DBC_USERNAME: root
+      SPRING_R2DBC_PASSWORD: password
+      JAVA_OPTS: -XX:+UseContainerSupport -XX:MaxRAMPercentage=70 -Djava.security.egd=file:/dev/./urandom
+    networks:
+      - spring-network
+
+volumes:
+  postgres-data:
+networks:
+  spring-network:
+

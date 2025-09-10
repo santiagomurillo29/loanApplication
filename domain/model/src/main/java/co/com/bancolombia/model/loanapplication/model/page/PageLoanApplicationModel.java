@@ -1,4 +1,4 @@
-package co.com.bancolombia.model.loanapplication.model;
+package co.com.bancolombia.model.loanapplication.model.page;
 
 import java.util.List;
 

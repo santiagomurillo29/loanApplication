@@ -18,6 +18,11 @@ public class StateModel {
         this.description = description;
     }
 
+    public StateModel(Long idState, String name) {
+        this.idState = idState;
+        this.name = name;
+    }
+
     public Long getIdState() {
         return idState;
     }

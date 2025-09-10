@@ -9,7 +9,7 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserResponse {
+public class UserResponseDto {
     private Long idUser;
     private String nameUser;
     private String lastNameUser;
