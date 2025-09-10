@@ -3,7 +3,7 @@ package co.com.bancolombia.model.loanapplication.model.restconsumer;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class UserRequest {
+public class UserResponse {
     private Long idUser;
     private String nameUser;
     private String lastNameUser;
@@ -14,7 +14,7 @@ public class UserRequest {
     private String emailUser;
     private BigDecimal baseSalaryUser;
 
-    public UserRequest(Long idUser, String nameUser, String lastNameUser, String documentUser, LocalDate birthdayUser, String addressUser, String phoneUser, String emailUser, BigDecimal baseSalaryUser) {
+    public UserResponse(Long idUser, String nameUser, String lastNameUser, String documentUser, LocalDate birthdayUser, String addressUser, String phoneUser, String emailUser, BigDecimal baseSalaryUser) {
         this.idUser = idUser;
         this.nameUser = nameUser;
         this.lastNameUser = lastNameUser;

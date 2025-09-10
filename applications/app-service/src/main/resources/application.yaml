@@ -1,14 +1,14 @@
 server:
-  port: 8081
+  port: 8086
 spring:
   application:
     name: "LoanApplication"
   devtools:
     add-properties: false
   r2dbc:
-    url: "r2dbc:postgresql://localhost:5432/LoanApplication"
-    username: "postgres"
-    password: 30052630
+    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://postgres-loan:5432/loan_application_db}
+    username: ${SPRING_R2DBC_USERNAME:root}
+    password: ${SPRING_R2DBC_PASSWORD:password}
   sql:
     init:
       mode: "always"
@@ -18,15 +18,15 @@ spring:
           enabled: true
 adapters:
   r2dbc:
-    host: "localhost"
+    host: postgres-loan
     port: 5432
-    database: "LoanApplication"
-    schema: "public"
-    username: "postgres"
-    password: 30052630
+    database: loan_application_db
+    schema: public
+    username: root
+    password: password
 services:
   authentication:
-    url: "http://localhost:8080"
+    url: "http://localhost:8085"
 management:
   endpoints:
     web:
@@ -41,10 +41,15 @@ management:
       enabled: true
 cors:
   allowed-origins: "http://localhost:4200,http://localhost:8080"
+
+jwt:
+  secret: "mysuperlongsecretkeythatismorethan32bytes123!"
+
 adapter:
   restconsumer:
     timeout: 5000
-    url: "http://localhost:8080"
+    url: "http://localhost:8085"
+
 resilience4j:
   circuitbreaker:
     instances:

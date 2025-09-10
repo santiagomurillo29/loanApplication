@@ -26,6 +26,12 @@ public class LoanTypeModel {
         this.autoValidation = autoValidation;
     }
 
+    public LoanTypeModel(Long idLoanType, String name, BigDecimal interestRate) {
+        this.idLoanType = idLoanType;
+        this.name = name;
+        this.interestRate = interestRate;
+    }
+
     public Long getIdLoanType() {
         return idLoanType;
     }

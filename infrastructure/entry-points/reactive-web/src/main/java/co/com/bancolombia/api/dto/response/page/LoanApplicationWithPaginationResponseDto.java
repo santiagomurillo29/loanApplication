@@ -1,4 +1,4 @@
-package co.com.bancolombia.api.dto.response;
+package co.com.bancolombia.api.dto.response.page;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -10,7 +10,6 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Data
 public class LoanApplicationWithPaginationResponseDto {
-    // microservicio authentication
     @Schema(description = "User's name", example = "string@gmail.com")
     private String name;
 
@@ -20,7 +19,6 @@ public class LoanApplicationWithPaginationResponseDto {
     @Schema(description = "User's base salary", example = "3500000.00")
     private BigDecimal baseSalaryUser;
 
-    // this microservice - table loan_application
     @Schema(description = "LoanApplication's amount", example = "500000")
     private BigDecimal amount;
 
@@ -42,16 +40,6 @@ public class LoanApplicationWithPaginationResponseDto {
     @Schema(description = "Name of state", example = "string")
     private String nameState;
 
-    // calcular this result
     @Schema(description = "LoanApplication's amountMonthly", example = "500000")
     private BigDecimal amountMonthly;
-
-    // extras
-    private int currentPage;
-
-    private int pageSize;
-
-    private int totalPages;
-
-    private Long totalElements;
 }
