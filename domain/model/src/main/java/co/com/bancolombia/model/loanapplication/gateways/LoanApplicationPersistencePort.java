@@ -10,7 +10,6 @@ import java.util.List;
 
 public interface LoanApplicationPersistencePort {
     Mono<LoanApplicationModel> saveLoanApplication(LoanApplicationModel loanApplicationModel);
-    Mono<LoanTypeModel> findLoanTypeById(Long idLoanType);
-    Mono<StateModel> findStateByName(String name);
+    Mono<LoanApplicationModel> findLoanApplicationById(Long idLoanApplication);
     Mono<PageLoanApplicationModel<LoanApplicationModel>> findLoanApplicationsByStates(int page, int size, List<String> states);
 }

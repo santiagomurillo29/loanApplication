@@ -4,6 +4,8 @@ import co.com.bancolombia.model.loanapplication.model.LoanApplicationModel;
 import co.com.bancolombia.model.loanapplication.model.LoanTypeModel;
 import co.com.bancolombia.model.loanapplication.model.StateModel;
 import co.com.bancolombia.r2dbc.adapter.LoanApplicationAdapterR2dbc;
+import co.com.bancolombia.r2dbc.adapter.LoanTypeAdapterR2dbc;
+import co.com.bancolombia.r2dbc.adapter.StateAdapterR2dbc;
 import co.com.bancolombia.r2dbc.entity.LoanApplicationEntity;
 import co.com.bancolombia.r2dbc.entity.LoanTypeEntity;
 import co.com.bancolombia.r2dbc.entity.StateEntity;
@@ -35,12 +37,10 @@ public class LoanApplicationAdapterTest {
 
     @Mock private LoanApplicationRepository loanApplicationRepository;
     @Mock private LoanApplicationRepositoryCustom loanApplicationRepositoryCustom;
-    @Mock private LoanTypeRepository loanTypeRepository;
-    @Mock private StateRepository stateRepository;
     @Mock private LoanApplicationMapperR2dbc loanApplicationMapperR2dbc;
-    @Mock private LoanTypeMapperR2dbc loanTypeMapperR2dbc;
-    @Mock private StateMapperR2dbc stateMapperR2dbc;
     @Mock private R2dbcSafeExecutor safeExecutor;
+    @Mock private LoanTypeAdapterR2dbc loanTypeAdapterR2dbc;
+    @Mock private StateAdapterR2dbc stateAdapterR2dbc;
     private LoanApplicationAdapterR2dbc adapter;
 
     @BeforeEach
@@ -48,12 +48,10 @@ public class LoanApplicationAdapterTest {
         adapter = new LoanApplicationAdapterR2dbc(
                 loanApplicationRepository,
                 loanApplicationRepositoryCustom,
-                loanTypeRepository,
-                stateRepository,
                 loanApplicationMapperR2dbc,
-                loanTypeMapperR2dbc,
-                stateMapperR2dbc,
-                safeExecutor
+                safeExecutor,
+                loanTypeAdapterR2dbc,
+                stateAdapterR2dbc
         );
     }
 
@@ -72,11 +70,9 @@ public class LoanApplicationAdapterTest {
         LoanApplicationModel mappedAfterSave = new LoanApplicationModel(1L, BigDecimal.valueOf(30000.00), 24, "user@gmail.com", stateModel, loanTypeModel);
         when(loanApplicationMapperR2dbc.toModelLoanApplication(entity)).thenReturn(mappedAfterSave);
 
-        when(loanTypeRepository.findById(1L)).thenReturn(Mono.just(new LoanTypeEntity(1L, "Personal Loan", BigDecimal.valueOf(5000.00), BigDecimal.valueOf(500000.00), BigDecimal.valueOf(12.50), true)));
-        when(loanTypeMapperR2dbc.toModelLoanType(any())).thenReturn(loanTypeModel);
+        when(loanTypeAdapterR2dbc.findLoanTypeById(1L)).thenReturn(Mono.just(loanTypeModel));
 
-        when(stateRepository.findByName("PENDING")).thenReturn(Mono.just(new StateEntity(1L, "PENDING", "description")));
-        when(stateMapperR2dbc.toModelState(any())).thenReturn(stateModel);
+        when(stateAdapterR2dbc.findStateById(1L)).thenReturn(Mono.just(stateModel));
 
         when(safeExecutor.executeMono(any()))
                 .thenAnswer(invocation -> ((Supplier<Mono<LoanApplicationModel>>) invocation.getArgument(0)).get());
@@ -93,58 +89,34 @@ public class LoanApplicationAdapterTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void findStateByName_persistsAndMaps() {
+    void findLoanApplicationById_persistsAndMaps() {
         StateModel stateModel = new StateModel("Description", "PENDING", 1L);
-        StateEntity stateEntity = new StateEntity(1L, "PENDING", "Description");
-
-        when(stateRepository.findByName("PENDING")).thenReturn(Mono.just(stateEntity));
-        when(stateMapperR2dbc.toModelState(stateEntity)).thenReturn(stateModel);
-
-        when(safeExecutor.executeMono(any()))
-                .thenAnswer(invocation -> ((Supplier<Mono<StateModel>>) invocation.getArgument(0)).get());
-
-        create(adapter.findStateByName(stateModel.getName()))
-                .expectNextMatches(result -> result.getIdState().equals(1L))
-                .verifyComplete();
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void findLoanTypeById_returnsMappedLoanType() {
-        Long loanTypeId = 1L;
-        LoanTypeEntity loanTypeEntity = new LoanTypeEntity(1L, "Personal Loan", BigDecimal.valueOf(5000.00), BigDecimal.valueOf(500000.00), BigDecimal.valueOf(12.50), true);
         LoanTypeModel loanTypeModel = new LoanTypeModel(1L, "Personal Loan", BigDecimal.valueOf(5000.00), BigDecimal.valueOf(500000.00), BigDecimal.valueOf(12.50), true);
 
-        when(loanTypeRepository.findById(loanTypeId))
-                .thenReturn(Mono.just(loanTypeEntity));
-        when(loanTypeMapperR2dbc.toModelLoanType(loanTypeEntity)).thenReturn(loanTypeModel);
+        LoanApplicationModel loanApplicationModel = new LoanApplicationModel(1L, BigDecimal.valueOf(30000.00), 24, "user@gmail.com", stateModel, loanTypeModel);
+        LoanApplicationEntity loanApplicationEntity = new LoanApplicationEntity(1L, BigDecimal.valueOf(30000.00), 24, "user@gmail.com", stateModel.getIdState(), loanTypeModel.getIdLoanType());
+
+        when(loanApplicationRepository.findById(loanApplicationEntity.getIdState())).thenReturn(Mono.just(loanApplicationEntity));
+        when(loanApplicationMapperR2dbc.toModelLoanApplication(loanApplicationEntity)).thenReturn(loanApplicationModel);
 
         when(safeExecutor.executeMono(any()))
-                .thenAnswer(invocation -> ((Supplier<Mono<LoanTypeModel>>) invocation.getArgument(0)).get());
+                .thenAnswer(invocation -> ((Supplier<Mono<LoanApplicationModel>>) invocation.getArgument(0)).get());
 
-        create(adapter.findLoanTypeById(loanTypeId))
-                .expectNext(loanTypeModel)
+        create(adapter.findLoanApplicationById(loanApplicationModel.getIdLoanApplication()))
+                .expectNextMatches(result -> result.getIdLoanApplication().equals(1L))
                 .verifyComplete();
     }
 
     @Test
     void findLoanApplicationsByStates_returnsPagedResult() {
         StateModel stateModel = new StateModel("Description", "PENDING", 1L);
-        LoanTypeModel loanTypeModel = new LoanTypeModel(1L, "Personal Loan",
-                BigDecimal.valueOf(5000.00),
-                BigDecimal.valueOf(500000.00),
-                BigDecimal.valueOf(12.50),
-                true);
+        LoanTypeModel loanTypeModel = new LoanTypeModel(1L, "Personal Loan", BigDecimal.valueOf(5000.00), BigDecimal.valueOf(500000.00), BigDecimal.valueOf(12.50), true);
 
-        LoanApplicationModel loan1 = new LoanApplicationModel(
-                1L, BigDecimal.valueOf(30000.00), 24, "user1@gmail.com", stateModel, loanTypeModel);
-        LoanApplicationModel loan2 = new LoanApplicationModel(
-                2L, BigDecimal.valueOf(40000.00), 12, "user2@gmail.com", stateModel, loanTypeModel);
+        LoanApplicationModel loan1 = new LoanApplicationModel(1L, BigDecimal.valueOf(30000.00), 24, "user1@gmail.com", stateModel, loanTypeModel);
+        LoanApplicationModel loan2 = new LoanApplicationModel(2L, BigDecimal.valueOf(40000.00), 12, "user2@gmail.com", stateModel, loanTypeModel);
 
-        when(loanApplicationRepositoryCustom.findByStatesPaged(any(), any(Integer.class), any(Integer.class)))
-                .thenReturn(Flux.just(loan1, loan2));
-        when(loanApplicationRepositoryCustom.countByStates(any()))
-                .thenReturn(Mono.just(2L));
+        when(loanApplicationRepositoryCustom.findByStatesPaged(any(), any(Integer.class), any(Integer.class))).thenReturn(Flux.just(loan1, loan2));
+        when(loanApplicationRepositoryCustom.countByStates(any())).thenReturn(Mono.just(2L));
 
         StepVerifier.create(adapter.findLoanApplicationsByStates(0, 10, List.of("PENDING")))
                 .expectNextMatches(page ->

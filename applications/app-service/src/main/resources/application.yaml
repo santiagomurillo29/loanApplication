@@ -6,9 +6,12 @@ spring:
   devtools:
     add-properties: false
   r2dbc:
-    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://postgres-loan:5432/loan_application_db}
-    username: ${SPRING_R2DBC_USERNAME:root}
-    password: ${SPRING_R2DBC_PASSWORD:password}
+    url: r2dbc:postgresql://postgres-loan:5432/LoanApplication
+    username: root
+    password: 30052630
+#    url: "${SPRING_R2DBC_URL:r2dbc:postgresql://postgres-loan:5432/loan_application_db}"
+#    username: "${SPRING_R2DBC_USERNAME:root}"
+#    password: "${SPRING_R2DBC_PASSWORD:password}"
   sql:
     init:
       mode: "always"
@@ -16,16 +19,27 @@ spring:
       r2dbc:
         repositories:
           enabled: true
+#adapters:
+#  r2dbc:
+#    host: "postgres-loan"
+#    port: 5432
+#    database: "loan_application_db"
+#    schema: "public"
+#    username: "root"
+#    password: "password"
+
 adapters:
   r2dbc:
-    host: postgres-loan
+    host: localhost
     port: 5432
-    database: loan_application_db
+    database: LoanApplication
     schema: public
-    username: root
-    password: password
+    username: postgres
+    password: 30052630
+
 services:
   authentication:
+    #url: "http://authentication:8085"
     url: "http://localhost:8085"
 management:
   endpoints:
@@ -40,15 +54,17 @@ management:
     circuitbreakers:
       enabled: true
 cors:
-  allowed-origins: "http://localhost:4200,http://localhost:8080"
-
+  allowed-origins: "http://localhost:4200,http://localhost:8086"
 jwt:
   secret: "mysuperlongsecretkeythatismorethan32bytes123!"
-
 adapter:
   restconsumer:
     timeout: 5000
     url: "http://localhost:8085"
+  sqs:
+    region: "us-east-1"
+    queueUrl: "https://sqs.us-east-1.amazonaws.com/418272784514/loan-application"
+    # endpoint: "http://localhost:4566 # For localstack only"
 
 resilience4j:
   circuitbreaker:

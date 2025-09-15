@@ -28,14 +28,13 @@ class RestConsumerTest {
 
     private  MockWebServer mockBackEnd;
     private AuthenticationClient authenticationClient;
-    private RestConsumerMapper restConsumerMapper;
 
     @BeforeEach
     void setUp() throws IOException {
         mockBackEnd = new MockWebServer();
         mockBackEnd.start();
 
-        restConsumerMapper = Mockito.mock(RestConsumerMapper.class);
+        RestConsumerMapper restConsumerMapper = Mockito.mock(RestConsumerMapper.class);
         Mockito.when(restConsumerMapper.toDomain(any(UserResponseDto.class)))
                 .thenReturn(new UserResponse(1L, "Juan", "test@mail.com", null, null, null, null, null, null));
 

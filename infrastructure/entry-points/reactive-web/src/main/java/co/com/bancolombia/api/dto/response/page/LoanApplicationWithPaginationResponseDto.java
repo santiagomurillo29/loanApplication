@@ -10,6 +10,9 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Data
 public class LoanApplicationWithPaginationResponseDto {
+    @Schema(description = "Unique identifier of the loan application of the user")
+    private Long idLoanApplication;
+
     @Schema(description = "User's name", example = "string@gmail.com")
     private String name;
 

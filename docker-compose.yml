@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: loan_application_db
     ports:
-      - "5434:5432"
+      - "5436:5432"
     volumes:
       - postgres-loan-data:/var/lib/postgresql/data
     networks:
@@ -46,7 +46,7 @@ services:
       - spring-network
 
 volumes:
-  postgres-data:
+  postgres-loan-data:
 networks:
   spring-network:
 

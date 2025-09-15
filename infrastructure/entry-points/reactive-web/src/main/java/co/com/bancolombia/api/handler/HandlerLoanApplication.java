@@ -1,6 +1,7 @@
 package co.com.bancolombia.api.handler;
 
 import co.com.bancolombia.api.dto.request.LoanApplicationRequestDto;
+import co.com.bancolombia.api.dto.request.UpdateLoanApplicationRequestDto;
 import co.com.bancolombia.api.dto.request.validation.RequestValidator;
 import co.com.bancolombia.api.mapper.LoanApplicationMapper;
 import co.com.bancolombia.usecase.loanapplication.usecase.api.LoanApplicationServicePort;
@@ -49,6 +50,20 @@ public class HandlerLoanApplication {
                 token)
                 .map(loanApplicationMapper::toPageDto)
                 .flatMap(response -> ServerResponse.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(response));
+    }
+
+    public Mono<ServerResponse> UpdateLoanApplication(ServerRequest serverRequest) {
+        String token = serverRequest.exchange().getAttribute("token");
+        return serverRequest.bodyToMono(UpdateLoanApplicationRequestDto.class)
+                .flatMap(validator::validate)
+                .flatMap(dto -> loanApplicationServicePort.updateLoanApplication(
+                        Long.parseLong(serverRequest.pathVariable("idLoanApplication")),
+                        dto.getState(),
+                        token))
+                .map(loanApplicationMapper::toDtoLoanApplication)
+                .flatMap(response -> ServerResponse.status(HttpStatus.CREATED)
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(response));
     }
