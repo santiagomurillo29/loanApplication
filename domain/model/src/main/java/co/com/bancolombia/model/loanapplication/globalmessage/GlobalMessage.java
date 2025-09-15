@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum GlobalMessage {
 
     NOT_FOUND_EMAIL(GlobalMessage.STATUS_CODE_404, "Email not found"),
+    NOT_FOUND_LOAN_APPLICATION(GlobalMessage.STATUS_CODE_404, "Loan application not found"),
     NOT_FOUND_LOAN_TYPE(GlobalMessage.STATUS_CODE_404, "Loan type not found"),
     NOT_FOUND_STATE(GlobalMessage.STATUS_CODE_404, "State not found"),
     MICROSERVICE_DOWN(GlobalMessage.STATUS_CODE_500, "Microservice is down"),

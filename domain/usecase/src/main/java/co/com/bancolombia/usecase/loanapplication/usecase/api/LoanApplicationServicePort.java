@@ -9,5 +9,6 @@ import java.util.List;
 
 public interface LoanApplicationServicePort {
     Mono<LoanApplicationModel> createLoanApplication(LoanApplicationModel loanApplicationModel, String token);
+    Mono<LoanApplicationModel> updateLoanApplication(Long idLoanApplication, String stateName, String token);
     Mono<PageLoanApplicationModel<LoanApplicationPendingModel>> findLoanApplicationPending(int page, int size, List<String> state, String token);
 }

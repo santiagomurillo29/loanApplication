@@ -1,6 +1,7 @@
 package co.com.bancolombia.api.router;
 
 import co.com.bancolombia.api.dto.request.LoanApplicationRequestDto;
+import co.com.bancolombia.api.dto.request.UpdateLoanApplicationRequestDto;
 import co.com.bancolombia.api.dto.response.LoanApplicationResponseDto;
 import co.com.bancolombia.api.handler.HandlerLoanApplication;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +20,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
+import static org.springframework.web.reactive.function.server.RequestPredicates.PUT;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
 @Configuration
@@ -90,10 +92,52 @@ public class RouterRestLoanApplication {
                                     @ApiResponse(responseCode = "409", description = "Loan application already exists")
                             }
                     )
+            ),
+            @RouterOperation(
+                    path = "/api/v1/solicitud/{idLoanApplication}",
+                    method = RequestMethod.PUT,
+                    beanClass = HandlerLoanApplication.class,
+                    beanMethod = "UpdateLoanApplication",
+                    consumes = "application/json",
+                    produces = "application/json",
+                    operation = @Operation(
+                            operationId = "updateLoanApplication",
+                            summary = "Update an existing loan application",
+                            parameters = {
+                                    @Parameter(
+                                            name = "idLoanApplication",
+                                            description = "Loan application ID",
+                                            in = ParameterIn.PATH,
+                                            required = true,
+                                            schema = @Schema(type = "integer", example = "123")
+                                    )
+                            },
+                            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                                    description = "Updated loan application data",
+                                    required = true,
+                                    content = @Content(
+                                            mediaType = "application/json",
+                                            schema = @Schema(implementation = UpdateLoanApplicationRequestDto.class)
+                                    )
+                            ),
+                            responses = {
+                                    @ApiResponse(
+                                            responseCode = "200",
+                                            description = "Loan application updated",
+                                            content = @Content(
+                                                    mediaType = "application/json",
+                                                    schema = @Schema(implementation = LoanApplicationResponseDto.class)
+                                            )
+                                    ),
+                                    @ApiResponse(responseCode = "404", description = "Loan application not found")
+                            }
+                    )
             )
+
     })
     public RouterFunction<ServerResponse> routerFunction(HandlerLoanApplication handlerLoanApplication) {
         return route(GET("/api/v1/solicitud"), handlerLoanApplication::GetLoanApplication)
-                .andRoute(POST("/api/v1/solicitudes"), handlerLoanApplication::CreateLoanApplication);
+                .andRoute(POST("/api/v1/solicitudes"), handlerLoanApplication::CreateLoanApplication)
+                .andRoute(PUT("/api/v1/solicitud/{idLoanApplication}"), handlerLoanApplication::UpdateLoanApplication);
     }
 }

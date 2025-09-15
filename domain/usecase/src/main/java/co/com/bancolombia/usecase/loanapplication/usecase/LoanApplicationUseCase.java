@@ -2,6 +2,9 @@ package co.com.bancolombia.usecase.loanapplication.usecase;
 
 import co.com.bancolombia.model.loanapplication.gateways.AuthenticationClientPersistencePort;
 import co.com.bancolombia.model.loanapplication.gateways.LoanApplicationPersistencePort;
+import co.com.bancolombia.model.loanapplication.gateways.LoanTypePersistencePort;
+import co.com.bancolombia.model.loanapplication.gateways.SQSSenderPersistencePort;
+import co.com.bancolombia.model.loanapplication.gateways.StatePersistencePort;
 import co.com.bancolombia.model.loanapplication.gateways.TokenAuthSecurityPort;
 import co.com.bancolombia.model.loanapplication.globalmessage.GlobalMessage;
 import co.com.bancolombia.model.loanapplication.model.LoanApplicationModel;
@@ -22,8 +25,10 @@ public class LoanApplicationUseCase implements LoanApplicationServicePort {
 
     private final TokenAuthSecurityPort tokenAuthSecurityPort;
     private final LoanApplicationPersistencePort loanApplicationPersistencePort;
+    private final StatePersistencePort statePersistencePort;
+    private final LoanTypePersistencePort loanTypePersistencePort;
     private final AuthenticationClientPersistencePort authenticationClientPersistencePort;
-
+    private final SQSSenderPersistencePort sqsSenderPersistencePort;
 
     @Override
     public Mono<LoanApplicationModel> createLoanApplication(LoanApplicationModel loanApplicationModel, String token) {
@@ -37,13 +42,13 @@ public class LoanApplicationUseCase implements LoanApplicationServicePort {
                                 if (!exists) {
                                     return Mono.error(new BusinessException(GlobalMessage.NOT_FOUND_EMAIL));
                                 }
-                                return loanApplicationPersistencePort.findLoanTypeById(
+                                return loanTypePersistencePort.findLoanTypeById(
                                         loanApplicationModel.getLoanType().getIdLoanType()
                                 );
                             })
                             .flatMap(loanTypeModel -> {
                                 loanApplicationModel.setLoanType(loanTypeModel);
-                                return loanApplicationPersistencePort.findStateByName("PENDING")
+                                return statePersistencePort.findStateByName("PENDING")
                                         .switchIfEmpty(Mono.error(new BusinessException(GlobalMessage.NOT_FOUND_STATE)));
                             })
                             .flatMap(state -> {
@@ -51,6 +56,32 @@ public class LoanApplicationUseCase implements LoanApplicationServicePort {
                                 return loanApplicationPersistencePort.saveLoanApplication(loanApplicationModel);
                             });
                 });
+    }
+
+    @Override
+    public Mono<LoanApplicationModel> updateLoanApplication(Long idLoanApplication, String stateName, String token) {
+        return tokenAuthSecurityPort.getSubject(token)
+                .flatMap(subject ->
+                        statePersistencePort.findStateByName(stateName)
+                                .switchIfEmpty(Mono.error(new BusinessException(GlobalMessage.NOT_FOUND_STATE)))
+                                .flatMap(newState ->
+                                    loanApplicationPersistencePort.findLoanApplicationById(idLoanApplication)
+                                            .switchIfEmpty(Mono.error(new BusinessException(GlobalMessage.NOT_FOUND_LOAN_APPLICATION)))
+                                            .flatMap(loanApplication -> {
+                                                loanApplication.setState(newState);
+                                                return loanApplicationPersistencePort.saveLoanApplication(loanApplication)
+                                                        .flatMap(saved -> {
+                                                            String message = String.format(
+                                                                    "{\"id\":%d,\"estado\":\"%s\",\"email\":\"%s\"}",
+                                                                    saved.getIdLoanApplication(),
+                                                                    saved.getState().getName(),
+                                                                    saved.getEmail()
+                                                            );
+                                                            return sqsSenderPersistencePort.send(message)
+                                                                    .thenReturn(saved);
+                                                        });
+                                            })
+                                ));
     }
 
     @Override

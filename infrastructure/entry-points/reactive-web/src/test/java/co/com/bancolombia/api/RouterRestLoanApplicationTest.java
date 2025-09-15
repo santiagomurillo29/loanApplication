@@ -1,6 +1,7 @@
 package co.com.bancolombia.api;
 
 import co.com.bancolombia.api.dto.request.LoanApplicationRequestDto;
+import co.com.bancolombia.api.dto.request.UpdateLoanApplicationRequestDto;
 import co.com.bancolombia.api.dto.request.validation.RequestValidator;
 import co.com.bancolombia.api.dto.response.LoanApplicationResponseDto;
 import co.com.bancolombia.api.dto.response.page.LoanApplicationPageResponseDto;
@@ -12,7 +13,6 @@ import co.com.bancolombia.model.loanapplication.model.LoanApplicationModel;
 import co.com.bancolombia.model.loanapplication.model.LoanApplicationPendingModel;
 import co.com.bancolombia.model.loanapplication.model.page.PageLoanApplicationModel;
 import co.com.bancolombia.usecase.loanapplication.usecase.api.LoanApplicationServicePort;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -21,18 +21,14 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.web.reactive.function.server.RouterFunction;
-import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
+
 import java.math.BigDecimal;
 import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
 
 @ContextConfiguration(classes = {RouterRestLoanApplication.class, HandlerLoanApplication.class})
 @WebFluxTest
@@ -79,7 +75,7 @@ class RouterRestLoanApplicationTest {
         LoanApplicationPendingModel pendingModel = new LoanApplicationPendingModel(loanModel, "Santiago", BigDecimal.valueOf(3500000), BigDecimal.valueOf(500000));
         PageLoanApplicationModel<LoanApplicationPendingModel> pageModel = new PageLoanApplicationModel<>(List.of(pendingModel), 0, 10, 1, 1);
 
-        LoanApplicationWithPaginationResponseDto dtoItem = new LoanApplicationWithPaginationResponseDto("Santiago", "user@gmail.com", BigDecimal.valueOf(3500000), BigDecimal.valueOf(500000), 24, 1L, "Personal Loan", BigDecimal.valueOf(12.5), 1L, "PENDING", BigDecimal.valueOf(500000));
+        LoanApplicationWithPaginationResponseDto dtoItem = new LoanApplicationWithPaginationResponseDto(null, "Santiago", "user@gmail.com", BigDecimal.valueOf(3500000), BigDecimal.valueOf(500000), 24, 1L, "Personal Loan", BigDecimal.valueOf(12.5), 1L, "PENDING", BigDecimal.valueOf(500000));
         LoanApplicationPageResponseDto responseDto = new LoanApplicationPageResponseDto(List.of(dtoItem), 0, 10, 1, 1L);
 
         int pages = 0;
@@ -98,4 +94,28 @@ class RouterRestLoanApplicationTest {
                 .expectBody(LoanApplicationPageResponseDto.class)
                 .isEqualTo(responseDto);
     }
+
+    @Test
+    void updateLoanApplication_endpoint() {
+        Long loanId = 1L;
+        String newState = "APPROVED";
+
+        UpdateLoanApplicationRequestDto requestDto = new UpdateLoanApplicationRequestDto(newState);
+        LoanApplicationModel model = new LoanApplicationModel(loanId, BigDecimal.valueOf(30000.00), 24, "user@gmail.com", null, null);
+        LoanApplicationResponseDto responseDto = new LoanApplicationResponseDto(loanId, BigDecimal.valueOf(30000.00), 24, "user@gmail.com", 1L, "Personal Loan", 1L, newState);
+
+        given(validator.validate(any())).willReturn(Mono.just(requestDto));
+        given(servicePort.updateLoanApplication(eq(loanId), eq(newState), any()))
+                .willReturn(Mono.just(model));
+        given(mapper.toDtoLoanApplication(any())).willReturn(responseDto);
+
+        webTestClient.put()
+                .uri("/api/v1/solicitud/{idLoanApplication}", loanId)
+                .bodyValue(requestDto)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(LoanApplicationResponseDto.class)
+                .isEqualTo(responseDto);
+    }
+
 }

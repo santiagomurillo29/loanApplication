@@ -28,12 +28,10 @@ public class LoanApplicationAdapterR2dbc implements LoanApplicationPersistencePo
 
     private final LoanApplicationRepository loanApplicationRepository;
     private final LoanApplicationRepositoryCustom loanApplicationRepositoryCustom;
-    private final LoanTypeRepository loanTypeRepository;
-    private final StateRepository stateRepository;
     private final LoanApplicationMapperR2dbc loanApplicationMapperR2dbc;
-    private final LoanTypeMapperR2dbc loanTypeMapperR2dbc;
-    private final StateMapperR2dbc stateMapperR2dbc;
     private final R2dbcSafeExecutor r2dbcSafeExecutor;
+    private final LoanTypeAdapterR2dbc loanTypeAdapterR2dbc;
+    private final StateAdapterR2dbc stateAdapterR2dbc;
 
     @Override
     public Mono<LoanApplicationModel> saveLoanApplication(LoanApplicationModel loanApplicationModel) {
@@ -43,8 +41,8 @@ public class LoanApplicationAdapterR2dbc implements LoanApplicationPersistencePo
                         .map(loanApplicationMapperR2dbc::toModelLoanApplication)
                         .flatMap(saved ->
                                 Mono.zip(
-                                                findLoanTypeById(saved.getLoanType().getIdLoanType()),
-                                                findStateByName(saved.getState().getName() != null ? saved.getState().getName() : "PENDING")
+                                                loanTypeAdapterR2dbc.findLoanTypeById(saved.getLoanType().getIdLoanType()),
+                                                stateAdapterR2dbc.findStateById(saved.getState().getIdState())
                                         )
                                         .map(tuple -> {
                                             saved.setLoanType(tuple.getT1());
@@ -58,27 +56,15 @@ public class LoanApplicationAdapterR2dbc implements LoanApplicationPersistencePo
     }
 
     @Override
-    public Mono<LoanTypeModel> findLoanTypeById(Long idLoanType) {
+    public Mono<LoanApplicationModel> findLoanApplicationById(Long idLoanApplication) {
         return r2dbcSafeExecutor.executeMono(() ->
-                loanTypeRepository.findById(idLoanType)
-                        .doOnSubscribe(sub -> log.info("Checking find of id: {}", idLoanType))
-                        .map(loanTypeMapperR2dbc::toModelLoanType)
-                        .doOnSuccess(found -> log.info("The loan type exists: {}", found))
-                        .doOnError(e -> log.error("Error finding loan type by id {}: {}", idLoanType, e.getMessage()))
+                loanApplicationRepository.findById(idLoanApplication)
+                        .doOnSubscribe(sub -> log.info("Finding loan application with id loan application"))
+                        .map(loanApplicationMapperR2dbc::toModelLoanApplication)
+                        .doOnError(e -> log.error("Error finding loan application by id: {}", e.getMessage()))
         );
     }
 
-
-    @Override
-    public Mono<StateModel> findStateByName(String name) {
-        return r2dbcSafeExecutor.executeMono(() ->
-                stateRepository.findByName(name)
-                        .doOnSubscribe(sub -> log.info("Checking existence of name: {}", name))
-                        .map(stateMapperR2dbc::toModelState)
-                        .doOnSuccess(found -> log.info("The name does exist: {}", found))
-                        .doOnError(e -> log.error("Error checking if the state exists by name {}: {}", name, e.getMessage()))
-        );
-    }
 
     @Override
     public Mono<PageLoanApplicationModel<LoanApplicationModel>> findLoanApplicationsByStates(int page, int size, List<String> states) {
@@ -95,6 +81,4 @@ public class LoanApplicationAdapterR2dbc implements LoanApplicationPersistencePo
                     return new PageLoanApplicationModel<>(content, page, size, totalPages, total);
                 });
     }
-
-
 }

@@ -44,6 +44,7 @@ public class SecurityConfig {
                         .pathMatchers("/auth/**").permitAll()
                         .pathMatchers(HttpMethod.POST, "/api/v1/solicitudes").hasRole("CUSTOMER")
                         .pathMatchers(HttpMethod.GET, "/api/v1/solicitud").hasRole("ADVISOR")
+                        .pathMatchers(HttpMethod.PUT, "/api/v1/solicitud/{idSolicitud}").hasRole("ADVISOR")
                         .anyExchange().authenticated()
                 )
                 .addFilterAfter(jwtFilter, SecurityWebFiltersOrder.FIRST)

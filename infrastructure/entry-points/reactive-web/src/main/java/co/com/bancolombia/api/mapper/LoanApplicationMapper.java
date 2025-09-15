@@ -26,6 +26,7 @@ public interface LoanApplicationMapper {
     @Mapping(target = "nameLoanType", source = "loanType.name")
     LoanApplicationResponseDto toDtoLoanApplication(LoanApplicationModel loanApplicationModel);
 
+    @Mapping(target = "idLoanApplication", source = "loanApplication.idLoanApplication")
     @Mapping(target = "name", source = "userName")
     @Mapping(target = "email", source = "loanApplication.email")
     @Mapping(target = "baseSalaryUser", source = "baseSalaryUser")
