@@ -35,7 +35,7 @@ public class LoanApplicationAdapterR2dbc implements LoanApplicationPersistencePo
 
     @Override
     public Mono<LoanApplicationModel> saveLoanApplication(LoanApplicationModel loanApplicationModel) {
-        return r2dbcSafeExecutor.executeMono(() ->
+        return  r2dbcSafeExecutor.executeMono(() ->
                 loanApplicationRepository.save(loanApplicationMapperR2dbc.toEntityLoanApplication(loanApplicationModel))
                         .doOnSubscribe(sub -> log.info("Saving loan application: {}", loanApplicationModel))
                         .map(loanApplicationMapperR2dbc::toModelLoanApplication)
@@ -57,14 +57,13 @@ public class LoanApplicationAdapterR2dbc implements LoanApplicationPersistencePo
 
     @Override
     public Mono<LoanApplicationModel> findLoanApplicationById(Long idLoanApplication) {
-        return r2dbcSafeExecutor.executeMono(() ->
+        return  r2dbcSafeExecutor.executeMono(() ->
                 loanApplicationRepository.findById(idLoanApplication)
                         .doOnSubscribe(sub -> log.info("Finding loan application with id loan application"))
                         .map(loanApplicationMapperR2dbc::toModelLoanApplication)
                         .doOnError(e -> log.error("Error finding loan application by id: {}", e.getMessage()))
         );
     }
-
 
     @Override
     public Mono<PageLoanApplicationModel<LoanApplicationModel>> findLoanApplicationsByStates(int page, int size, List<String> states) {
@@ -80,5 +79,15 @@ public class LoanApplicationAdapterR2dbc implements LoanApplicationPersistencePo
                     int totalPages = (int) Math.ceil((double) total / size);
                     return new PageLoanApplicationModel<>(content, page, size, totalPages, total);
                 });
+    }
+
+    @Override
+    public Flux<LoanApplicationModel> findApprovedLoansByEmail(String emailUser) {
+        return  r2dbcSafeExecutor.executeFlux(() ->
+                loanApplicationRepository.findApprovedLoansByEmail(emailUser)
+                        .doOnSubscribe(sub -> log.info("Finding loan application approved with email user"))
+                        .map(loanApplicationMapperR2dbc::toModelLoanApplication)
+                        .doOnError(e -> log.error("Error finding loan application approved by email user: {}", e.getMessage()))
+        );
     }
 }

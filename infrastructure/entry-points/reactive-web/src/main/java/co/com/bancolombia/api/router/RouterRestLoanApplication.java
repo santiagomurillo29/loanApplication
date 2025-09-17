@@ -109,7 +109,7 @@ public class RouterRestLoanApplication {
                                             description = "Loan application ID",
                                             in = ParameterIn.PATH,
                                             required = true,
-                                            schema = @Schema(type = "integer", example = "123")
+                                            schema = @Schema(type = "integer", example = "1")
                                     )
                             },
                             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -132,12 +132,98 @@ public class RouterRestLoanApplication {
                                     @ApiResponse(responseCode = "404", description = "Loan application not found")
                             }
                     )
+            ),
+            @RouterOperation(
+                    path = "/api/v1/calcular-capacidad/{idLoanApplication}",
+                    method = RequestMethod.POST,
+                    beanClass = HandlerLoanApplication.class,
+                    beanMethod = "CalculateCapacityLoanApplication",
+                    consumes = "application/json",
+                    produces = "application/json",
+                    operation = @Operation(
+                            operationId = "calculateCapacityLoanApplication",
+                            summary = "calculate capacity an loan application",
+                            parameters = {
+                                    @Parameter(
+                                            name = "idLoanApplication",
+                                            description = "Loan application ID",
+                                            in = ParameterIn.PATH,
+                                            required = true,
+                                            schema = @Schema(type = "integer", example = "1")
+                                    )
+                            },
+                            responses = {
+                                    @ApiResponse(
+                                            responseCode = "200",
+                                            description = "Loan application calculate capacity",
+                                            content = @Content(
+                                                    mediaType = "application/json",
+                                                    schema = @Schema(implementation = LoanApplicationResponseDto.class)
+                                            )
+                                    ),
+                                    @ApiResponse(responseCode = "404", description = "Loan application not found")
+                            }
+                    )
+            ),
+            @RouterOperation(
+                    path = "/health",
+                    method = RequestMethod.GET,
+                    beanClass = HandlerLoanApplication.class,
+                    beanMethod = "GetHealth",
+                    produces = "application/json",
+                    operation = @Operation(
+                            operationId = "getHealth",
+                            summary = "Check database health",
+                            description = "Returns UP when the database is reachable, otherwise DOWN.",
+                            responses = {
+                                    @ApiResponse(
+                                            responseCode = "200",
+                                            description = "Database is UP",
+                                            content = @Content(
+                                                    mediaType = "application/json",
+                                                    schema = @Schema(example = "{\"status\":\"UP\",\"database\":\"UP\"}")
+                                            )
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "503",
+                                            description = "Database is DOWN",
+                                            content = @Content(
+                                                    mediaType = "application/json",
+                                                    schema = @Schema(example = "{\"status\":\"DOWN\",\"database\":\"DOWN\"}")
+                                            )
+                                    )
+                            }
+                    )
+            ),
+            @RouterOperation(
+                    path = "/liveness",
+                    method = RequestMethod.GET,
+                    beanClass = HandlerLoanApplication.class,
+                    beanMethod = "GetLiveness",
+                    produces = "text/plain",
+                    operation = @Operation(
+                            operationId = "getLiveness",
+                            summary = "Check liveness",
+                            description = "Always returns OK if the service is alive.",
+                            responses = {
+                                    @ApiResponse(
+                                            responseCode = "200",
+                                            description = "Service is alive",
+                                            content = @Content(
+                                                    mediaType = "text/plain",
+                                                    schema = @Schema(example = "OK")
+                                            )
+                                    )
+                            }
+                    )
             )
-
     })
     public RouterFunction<ServerResponse> routerFunction(HandlerLoanApplication handlerLoanApplication) {
         return route(GET("/api/v1/solicitud"), handlerLoanApplication::GetLoanApplication)
+                .andRoute(GET("/health"), handlerLoanApplication::GetHealth)
+                .andRoute(GET("/liveness"), handlerLoanApplication::GetLiveness)
                 .andRoute(POST("/api/v1/solicitudes"), handlerLoanApplication::CreateLoanApplication)
+                .andRoute(POST("/api/v1/calcular-capacidad/{idLoanApplication}"), handlerLoanApplication::CalculateCapacityLoanApplication)
                 .andRoute(PUT("/api/v1/solicitud/{idLoanApplication}"), handlerLoanApplication::UpdateLoanApplication);
     }
 }

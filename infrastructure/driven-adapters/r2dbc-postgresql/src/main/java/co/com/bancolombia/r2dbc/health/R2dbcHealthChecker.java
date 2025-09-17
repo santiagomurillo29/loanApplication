@@ -16,15 +16,20 @@ public class R2dbcHealthChecker {
     private final ConnectionFactory connectionFactory;
 
     public Mono<Boolean> isDatabaseUp() {
-        return Mono.from(connectionFactory.create())
-                .flatMap(connection ->
-                        Mono.from(connection.createStatement("SELECT 1").execute())
-                                .flatMap(result -> Mono.from(result.map((row, metadata) -> true)))
-                                .doFinally(signal -> connection.close())
+        return Mono.usingWhen(
+                        Mono.from(connectionFactory.create()),
+                        connection -> Mono.from(connection.createStatement("SELECT 1").execute())
+                                .flatMap(result -> Mono.from(result.map((row, meta) -> true)))
+                                .onErrorResume(e -> {
+                                    log.error("Query test failed: {}", e.getMessage());
+                                    return Mono.just(false);
+                                }),
+                        connection -> Mono.from(connection.close())
+                                .doOnError(e -> log.warn("Error closing connection: {}", e.getMessage()))
                 )
                 .timeout(Duration.ofSeconds(5))
                 .onErrorResume(e -> {
-                    log.error("Ping to R2DBC DB failed: {}", e.getMessage());
+                    log.error("Ping to R2DBC DB failed: {}", e.toString());
                     return Mono.just(false);
                 });
     }
