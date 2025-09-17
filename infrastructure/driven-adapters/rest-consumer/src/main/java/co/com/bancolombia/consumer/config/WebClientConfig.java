@@ -22,7 +22,7 @@ public class WebClientConfig {
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .option(EpollChannelOption.TCP_KEEPIDLE, 300)
                 .option(EpollChannelOption.TCP_KEEPINTVL, 60)
-                .responseTimeout(Duration.ofSeconds(3))
+                .responseTimeout(Duration.ofSeconds(10))
                 .doOnConnected(conn -> {
                     conn.addHandlerLast(new ReadTimeoutHandler(5000, TimeUnit.MILLISECONDS));
                     conn.addHandlerLast(new WriteTimeoutHandler(5000, TimeUnit.MILLISECONDS));

@@ -7,6 +7,11 @@ public class DataBaseException extends CoreException {
     public DataBaseException(GlobalMessage error){
         super(error);
     }
+
+    public DataBaseException(GlobalMessage error, Throwable cause){
+        super(error);
+        initCause(cause);
+    }
 }
 
 

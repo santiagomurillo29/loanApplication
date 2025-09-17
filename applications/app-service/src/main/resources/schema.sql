@@ -2,7 +2,6 @@ DROP TABLE IF EXISTS state CASCADE;
 DROP TABLE IF EXISTS loan_type CASCADE;
 DROP TABLE IF EXISTS loan_application CASCADE;
 
-
 CREATE TABLE IF NOT EXISTS state (
     id_state BIGSERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -32,9 +31,13 @@ CREATE TABLE IF NOT EXISTS loan_application (
 INSERT INTO state (name, description) VALUES
 ('PENDING', 'Loan application pending review'),
 ('APPROVED', 'Loan application approved'),
-('REJECTED', 'Loan application rejected');
+('REJECTED', 'Loan application rejected'),
+('MANUAL_REVIEW', 'Loan application manuel review');
 
 INSERT INTO loan_type (name, min_amount, max_amount, interest_rate, auto_validation) VALUES
 ('Personal Loan', 5000.00, 10000.00, 12.50, TRUE),
 ('Car Loan', 1000.00, 20000.00, 10.00, FALSE),
 ('Mortgage', 5000.00, 50000.00, 8.50, FALSE);
+
+-- INSERT INTO loan_application (amount, term, email, id_state, id_loan_type) VALUES
+-- (5000.00, 24, 'smurillocano29@gmail.com', 1, 1);

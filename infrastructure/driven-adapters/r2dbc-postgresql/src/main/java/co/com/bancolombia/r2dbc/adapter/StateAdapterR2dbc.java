@@ -21,7 +21,7 @@ public class StateAdapterR2dbc implements StatePersistencePort {
 
     @Override
     public Mono<StateModel> findStateByName(String name) {
-        return r2dbcSafeExecutor.executeMono(() ->
+        return  r2dbcSafeExecutor.executeMono(() ->
                 stateRepository.findByName(name)
                         .doOnSubscribe(sub -> log.info("Checking existence of name: {}", name))
                         .map(stateMapperR2dbc::toModelState)
@@ -32,7 +32,7 @@ public class StateAdapterR2dbc implements StatePersistencePort {
 
     @Override
     public Mono<StateModel> findStateById(Long id) {
-        return r2dbcSafeExecutor.executeMono(() ->
+        return  r2dbcSafeExecutor.executeMono(() ->
                 stateRepository.findById(id)
                         .doOnSubscribe(sub -> log.info("Checking existence of id: {}", id))
                         .map(stateMapperR2dbc::toModelState)

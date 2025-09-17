@@ -12,8 +12,10 @@ import co.com.bancolombia.api.router.RouterRestLoanApplication;
 import co.com.bancolombia.model.loanapplication.model.LoanApplicationModel;
 import co.com.bancolombia.model.loanapplication.model.LoanApplicationPendingModel;
 import co.com.bancolombia.model.loanapplication.model.page.PageLoanApplicationModel;
+import co.com.bancolombia.r2dbc.health.R2dbcHealthChecker;
 import co.com.bancolombia.usecase.loanapplication.usecase.api.LoanApplicationServicePort;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
@@ -25,10 +27,12 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.when;
 
 @ContextConfiguration(classes = {RouterRestLoanApplication.class, HandlerLoanApplication.class})
 @WebFluxTest
@@ -47,6 +51,9 @@ class RouterRestLoanApplicationTest {
 
     @MockitoBean
     private LoanApplicationMapper mapper;
+
+    @MockitoBean
+    private R2dbcHealthChecker r2dbcHealthChecker;
 
     @Test
     void createLoanApplication_endpoint() {
@@ -116,6 +123,62 @@ class RouterRestLoanApplicationTest {
                 .expectStatus().isCreated()
                 .expectBody(LoanApplicationResponseDto.class)
                 .isEqualTo(responseDto);
+    }
+
+    @Test
+    void calculateCapacityLoanApplication_endpoint() {
+        Long loanId = 1L;
+
+        LoanApplicationModel model = new LoanApplicationModel(loanId, BigDecimal.valueOf(30000.00), 24, "user@gmail.com", null, null);
+
+        LoanApplicationResponseDto responseDto = new LoanApplicationResponseDto(loanId, BigDecimal.valueOf(30000.00), 24, "user@gmail.com", 1L, "Personal Loan", 1L, "APPROVED");
+
+        given(servicePort.calculateCapacityLoanApplication(eq(loanId), any())).willReturn(Mono.just(model));
+        given(mapper.toDtoLoanApplication(any())).willReturn(responseDto);
+
+        webTestClient.post()
+                .uri("/api/v1/calcular-capacidad/{idLoanApplication}", loanId)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(LoanApplicationResponseDto.class)
+                .isEqualTo(responseDto);
+    }
+
+    @Test
+    void shouldReturnUpWhenDatabaseIsUp() {
+        when(r2dbcHealthChecker.isDatabaseUp()).thenReturn(Mono.just(true));
+
+        webTestClient.get()
+                .uri("/health")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(String.valueOf(MediaType.APPLICATION_JSON))
+                .expectBody(Map.class)
+                .isEqualTo(Map.of("status", "UP", "database", "UP"));
+    }
+
+    @Test
+    void shouldReturnDownWhenDatabaseIsDown() {
+        when(r2dbcHealthChecker.isDatabaseUp()).thenReturn(Mono.just(false));
+
+        webTestClient.get()
+                .uri("/health")
+                .exchange()
+                .expectStatus().is5xxServerError()
+                .expectHeader().contentType(String.valueOf(MediaType.APPLICATION_JSON))
+                .expectBody(Map.class)
+                .isEqualTo(Map.of("status", "DOWN", "database", "DOWN"));
+    }
+
+    @Test
+    void shouldReturnOkForLiveness() {
+        webTestClient.get()
+                .uri("/liveness")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(String.valueOf(MediaType.TEXT_PLAIN))
+                .expectBody(String.class)
+                .isEqualTo("OK");
     }
 
 }

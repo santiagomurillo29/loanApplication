@@ -10,12 +10,14 @@ import co.com.bancolombia.model.loanapplication.globalmessage.GlobalMessage;
 import co.com.bancolombia.model.loanapplication.model.LoanApplicationModel;
 import co.com.bancolombia.model.loanapplication.model.LoanApplicationPendingModel;
 import co.com.bancolombia.model.loanapplication.model.page.PageLoanApplicationModel;
+import co.com.bancolombia.model.loanapplication.model.sqs.LoanApplicationPayment;
+import co.com.bancolombia.model.loanapplication.model.sqs.LoanApplicationState;
 import co.com.bancolombia.usecase.loanapplication.exception.BusinessException;
 import co.com.bancolombia.usecase.loanapplication.usecase.api.LoanApplicationServicePort;
+import co.com.bancolombia.usecase.loanapplication.usecase.businessoperation.BusinessOperation;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -71,17 +73,96 @@ public class LoanApplicationUseCase implements LoanApplicationServicePort {
                                                 loanApplication.setState(newState);
                                                 return loanApplicationPersistencePort.saveLoanApplication(loanApplication)
                                                         .flatMap(saved -> {
-                                                            String message = String.format(
-                                                                    "{\"id\":%d,\"estado\":\"%s\",\"email\":\"%s\"}",
+                                                            LoanApplicationState event = new LoanApplicationState(
                                                                     saved.getIdLoanApplication(),
                                                                     saved.getState().getName(),
-                                                                    saved.getEmail()
+                                                                    saved.getEmail(),
+                                                                    "STATUS"
                                                             );
-                                                            return sqsSenderPersistencePort.send(message)
+                                                            System.out.println("event = " + event);
+
+                                                            return sqsSenderPersistencePort.sendState(event)
                                                                     .thenReturn(saved);
                                                         });
                                             })
                                 ));
+    }
+
+    @Override
+    public Mono<LoanApplicationModel> calculateCapacityLoanApplication(Long idLoanApplication, String token) {
+        return tokenAuthSecurityPort.getSubject(token)
+                .flatMap(subject ->
+                        loanApplicationPersistencePort.findLoanApplicationById(idLoanApplication)
+                                .switchIfEmpty(Mono.error(new BusinessException(GlobalMessage.NOT_FOUND_LOAN_APPLICATION)))
+                                .flatMap(loanApplication ->
+                                        loanTypePersistencePort.findLoanTypeById(loanApplication.getLoanType().getIdLoanType())
+                                                .switchIfEmpty(Mono.error(new BusinessException(GlobalMessage.NOT_FOUND_LOAN_TYPE)))
+                                                .flatMap(loanType -> {
+                                                    if (!loanType.getAutoValidation()) {
+                                                        return Mono.error(new BusinessException(GlobalMessage.AUTO_VALIDATION_NOT_ALLOWED));
+                                                    }
+                                                    loanApplication.setLoanType(loanType);
+
+                                                    return authenticationClientPersistencePort.getUserByEmail(loanApplication.getEmail(), token)
+                                                            .flatMap(user -> {
+                                                                BigDecimal income = user.getBaseSalaryUser();
+                                                                BigDecimal maximumCapacity = BusinessOperation.calculateMaximumCapacity(income);
+
+                                                                return loanApplicationPersistencePort.findApprovedLoansByEmail(user.getEmailUser())
+                                                                        .flatMap(p -> loanTypePersistencePort.findLoanTypeById(p.getLoanType().getIdLoanType())
+                                                                            .map(loanT -> {
+                                                                                p.setLoanType(loanT);
+                                                                                return p;
+                                                                            }))
+                                                                        .collectList()
+                                                                        .flatMap(approved -> {
+                                                                            BigDecimal currentDebt = BusinessOperation.calculateCurrentDebt(
+                                                                                    approved.stream()
+                                                                                            .map(p -> BusinessOperation.calculateMonthlyInstallment(
+                                                                                                    p.getAmount(),
+                                                                                                    p.getLoanType().getInterestRate(),
+                                                                                                    p.getTerm()
+                                                                                            ))
+                                                                                            .toList()
+                                                                            );
+
+                                                                            BigDecimal availableCapacity = BusinessOperation.calculateAvailableCapacity(maximumCapacity, currentDebt);
+
+                                                                            BigDecimal newFee = BusinessOperation.calculateMonthlyInstallment(
+                                                                                    loanApplication.getAmount(),
+                                                                                    loanType.getInterestRate(),
+                                                                                    loanApplication.getTerm()
+                                                                            );
+
+                                                                            String newState = BusinessOperation.decideLoan(
+                                                                                    newFee, availableCapacity,
+                                                                                    loanApplication.getAmount(), income
+                                                                            );
+
+                                                                            return statePersistencePort.findStateByName(newState)
+                                                                                    .flatMap(state -> {
+                                                                                        loanApplication.setState(state);
+                                                                                        return loanApplicationPersistencePort.saveLoanApplication(loanApplication)
+                                                                                                .flatMap(saved -> {
+                                                                                                    LoanApplicationPayment event = new LoanApplicationPayment(
+                                                                                                            saved.getIdLoanApplication(),
+                                                                                                            saved.getState().getName(),
+                                                                                                            saved.getEmail(),
+                                                                                                            loanApplication.getAmount(),
+                                                                                                            loanType.getInterestRate(),
+                                                                                                            loanApplication.getTerm(),
+                                                                                                            "PLAN"
+                                                                                                    );
+                                                                                                    System.out.println("event = " + event);
+                                                                                                    return sqsSenderPersistencePort.sendPayment(event)
+                                                                                                            .thenReturn(saved);
+                                                                                                });
+                                                                                    });
+                                                                        });
+                                                            });
+                                                })
+                                )
+                );
     }
 
     @Override

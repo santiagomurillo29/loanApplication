@@ -6,7 +6,11 @@ spring:
   devtools:
     add-properties: false
   r2dbc:
-    url: r2dbc:postgresql://postgres-loan:5432/LoanApplication
+    pool:
+      initial-size: 5
+      max-size: 20
+      max-idle-time: 30m
+    url: r2dbc:postgresql://localhost:5432/LoanApplication
     username: root
     password: 30052630
 #    url: "${SPRING_R2DBC_URL:r2dbc:postgresql://postgres-loan:5432/loan_application_db}"
@@ -58,32 +62,7 @@ cors:
 jwt:
   secret: "mysuperlongsecretkeythatismorethan32bytes123!"
 adapter:
-  restconsumer:
-    timeout: 5000
-    url: "http://localhost:8085"
   sqs:
     region: "us-east-1"
-    queueUrl: "https://sqs.us-east-1.amazonaws.com/418272784514/loan-application"
+    queueUrl: "https://sqs.us-east-1.amazonaws.com/418272784514/loan-application-queue"
     # endpoint: "http://localhost:4566 # For localstack only"
-
-resilience4j:
-  circuitbreaker:
-    instances:
-      testGet:
-        registerHealthIndicator: true
-        failureRateThreshold: 50
-        slowCallRateThreshold: 50
-        slowCallDurationThreshold: "2s"
-        permittedNumberOfCallsInHalfOpenState: 3
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 10
-        waitDurationInOpenState: "10s"
-      testPost:
-        registerHealthIndicator: true
-        failureRateThreshold: 50
-        slowCallRateThreshold: 50
-        slowCallDurationThreshold: "2s"
-        permittedNumberOfCallsInHalfOpenState: 3
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 10
-        waitDurationInOpenState: "10s"

@@ -76,23 +76,31 @@ public class GlobalExceptionHandler extends AbstractErrorWebExceptionHandler {
     }
 
     private Mono<Tuple2<ErrorResponseBodyDto, HttpStatus>> handleDBException(DataBaseException ex, ServerRequest request) {
+        GlobalMessage error = ex.getError();
+
         ErrorResponseBodyDto body = ErrorResponseBodyDto.builder()
-                .message(ex.getMessage())
-                .code(ex.getError().getStatusCode())
+                .message(error.getMessage())
+                .code(error.getStatusCode())
                 .timestamp(LocalDateTime.now().toString())
                 .path(request.path())
                 .build();
-        return Mono.just(body).zipWith(Mono.just(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        return Mono.just(body)
+                .zipWith(Mono.just(HttpStatus.valueOf(Integer.parseInt(error.getStatusCode()))));
     }
 
     private Mono<Tuple2<ErrorResponseBodyDto, HttpStatus>> handleWebClient(WebClientException ex, ServerRequest request) {
+        GlobalMessage error = ex.getError();
+
         ErrorResponseBodyDto body = ErrorResponseBodyDto.builder()
-                .message(ex.getMessage())
-                .code(ex.getError().getStatusCode())
+                .message(error.getMessage())
+                .code(error.getStatusCode())
                 .timestamp(LocalDateTime.now().toString())
                 .path(request.path())
                 .build();
-        return Mono.just(body).zipWith(Mono.just(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        return Mono.just(body)
+                .zipWith(Mono.just(HttpStatus.valueOf(Integer.parseInt(error.getStatusCode()))));
     }
 
     private  Mono<Tuple2<ErrorResponseBodyDto, HttpStatus>> handleConstraintViolationException(ConstraintViolationException ex, ServerRequest request) {

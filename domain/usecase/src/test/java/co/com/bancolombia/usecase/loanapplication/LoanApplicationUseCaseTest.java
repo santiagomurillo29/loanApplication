@@ -13,6 +13,8 @@ import co.com.bancolombia.model.loanapplication.model.LoanTypeModel;
 import co.com.bancolombia.model.loanapplication.model.StateModel;
 import co.com.bancolombia.model.loanapplication.model.page.PageLoanApplicationModel;
 import co.com.bancolombia.model.loanapplication.model.restconsumer.UserResponse;
+import co.com.bancolombia.model.loanapplication.model.sqs.LoanApplicationPayment;
+import co.com.bancolombia.model.loanapplication.model.sqs.LoanApplicationState;
 import co.com.bancolombia.usecase.loanapplication.exception.BusinessException;
 import co.com.bancolombia.usecase.loanapplication.usecase.LoanApplicationUseCase;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import java.math.BigDecimal;
@@ -148,7 +151,7 @@ public class LoanApplicationUseCaseTest {
         given(statePersistencePort.findStateByName(stateName)).willReturn(Mono.just(newState));
         given(loanApplicationPersistencePort.findLoanApplicationById(idLoanApplication)).willReturn(Mono.just(existing));
         given(loanApplicationPersistencePort.saveLoanApplication(any())).willReturn(Mono.just(updated));
-        given(sqsSenderPersistencePort.send(anyString())).willReturn(Mono.empty());
+        given(sqsSenderPersistencePort.sendState(any(LoanApplicationState.class))).willReturn(Mono.empty());
 
         StepVerifier.create(useCase.updateLoanApplication(idLoanApplication, stateName, token))
                 .expectNextMatches(saved -> saved.getState().getName().equals("APPROVED"))
@@ -183,6 +186,31 @@ public class LoanApplicationUseCaseTest {
                     assertEquals(BigDecimal.valueOf(1000), pending1.getMonthlyAmount());
                     assertEquals(BigDecimal.valueOf(1000), pending2.getMonthlyAmount());
                 })
+                .verifyComplete();
+    }
+
+    @Test
+    void calculateCapacityLoanApplication_whenValid_thenSaveAndSend() {
+        Long idLoan = 1L;
+        String email = "user@gmail.com";
+
+        LoanTypeModel loanType = new LoanTypeModel(1L, "Personal Loan", BigDecimal.ONE, BigDecimal.TEN, BigDecimal.valueOf(12.5), true);
+        StateModel stateModel = new StateModel("desc", "APPROVED", 2L);
+        LoanApplicationModel loanApp = new LoanApplicationModel(idLoan, BigDecimal.valueOf(10000), 12, email, null, loanType);
+        UserResponse user = new UserResponse(1L, "John", "Doe", "doc", null, "addr", "phone", email, BigDecimal.valueOf(5000));
+        LoanApplicationModel savedLoan = new LoanApplicationModel(idLoan, loanApp.getAmount(), loanApp.getTerm(), email, stateModel, loanType);
+
+        given(tokenAuthSecurityPort.getSubject(token)).willReturn(Mono.just(email));
+        given(loanApplicationPersistencePort.findLoanApplicationById(idLoan)).willReturn(Mono.just(loanApp));
+        given(loanTypePersistencePort.findLoanTypeById(loanType.getIdLoanType())).willReturn(Mono.just(loanType));
+        given(authenticationClientPersistencePort.getUserByEmail(email, token)).willReturn(Mono.just(user));
+        given(loanApplicationPersistencePort.findApprovedLoansByEmail(email)).willReturn(Flux.empty());
+        given(statePersistencePort.findStateByName(anyString())).willReturn(Mono.just(stateModel));
+        given(loanApplicationPersistencePort.saveLoanApplication(any())).willReturn(Mono.just(savedLoan));
+        given(sqsSenderPersistencePort.sendPayment(any(LoanApplicationPayment.class))).willReturn(Mono.empty());
+
+        StepVerifier.create(useCase.calculateCapacityLoanApplication(idLoan, token))
+                .expectNextMatches(result -> result.getState().getName().equals("APPROVED"))
                 .verifyComplete();
     }
 
