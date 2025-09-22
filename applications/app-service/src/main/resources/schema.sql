@@ -39,5 +39,5 @@ INSERT INTO loan_type (name, min_amount, max_amount, interest_rate, auto_validat
 ('Car Loan', 1000.00, 20000.00, 10.00, FALSE),
 ('Mortgage', 5000.00, 50000.00, 8.50, FALSE);
 
--- INSERT INTO loan_application (amount, term, email, id_state, id_loan_type) VALUES
--- (5000.00, 24, 'smurillocano29@gmail.com', 1, 1);
+ INSERT INTO loan_application (amount, term, email, id_state, id_loan_type) VALUES
+ (5000.00, 24, 'smurillocano29@gmail.com', 1, 1);

@@ -13,7 +13,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-public class UseCasesConfigTest {
+class UseCasesConfigTest {
 
     @MockitoBean
     private R2dbcSafeExecutor r2dbcSafeExecutor;

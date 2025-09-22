@@ -27,7 +27,7 @@ import static org.mockito.BDDMockito.given;
                 "jwt.secret=mysuperlongsecretkeythatismorethan32bytes123!",
         }
 )
-public class JwtIntegrationsTest {
+class JwtIntegrationsTest {
 
     @TestConfiguration
     static class TestRouterConfig {

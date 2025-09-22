@@ -21,13 +21,15 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class HandlerLoanApplication {
 
+    private static final String TOKEN_ATTR = "token";
+
     private final LoanApplicationServicePort loanApplicationServicePort;
     private final LoanApplicationMapper loanApplicationMapper;
     private final RequestValidator validator;
     private final R2dbcHealthChecker healthChecker;
 
-    public Mono<ServerResponse> CreateLoanApplication(ServerRequest serverRequest) {
-        String token = serverRequest.exchange().getAttribute("token");
+    public Mono<ServerResponse> createLoanApplication(ServerRequest serverRequest) {
+        String token = serverRequest.exchange().getAttribute(TOKEN_ATTR );
         return serverRequest.bodyToMono(LoanApplicationRequestDto.class)
                 .flatMap(validator::validate)
                 .map(loanApplicationMapper::toModelLoanApplication)
@@ -38,8 +40,8 @@ public class HandlerLoanApplication {
                         .bodyValue(response));
     }
 
-    public Mono<ServerResponse> GetLoanApplication(ServerRequest serverRequest) {
-        String token = serverRequest.exchange().getAttribute("token");
+    public Mono<ServerResponse> getLoanApplication(ServerRequest serverRequest) {
+        String token = serverRequest.exchange().getAttribute(TOKEN_ATTR);
         return loanApplicationServicePort.findLoanApplicationPending(
                 serverRequest.queryParam("page")
                         .map(Integer::parseInt)
@@ -57,8 +59,8 @@ public class HandlerLoanApplication {
                         .bodyValue(response));
     }
 
-    public Mono<ServerResponse> UpdateLoanApplication(ServerRequest serverRequest) {
-        String token = serverRequest.exchange().getAttribute("token");
+    public Mono<ServerResponse> updateLoanApplication(ServerRequest serverRequest) {
+        String token = serverRequest.exchange().getAttribute(TOKEN_ATTR );
         return serverRequest.bodyToMono(UpdateLoanApplicationRequestDto.class)
                 .flatMap(validator::validate)
                 .flatMap(dto -> loanApplicationServicePort.updateLoanApplication(
@@ -71,8 +73,8 @@ public class HandlerLoanApplication {
                         .bodyValue(response));
     }
 
-    public Mono<ServerResponse> CalculateCapacityLoanApplication(ServerRequest serverRequest) {
-        String token = serverRequest.exchange().getAttribute("token");
+    public Mono<ServerResponse> calculateCapacityLoanApplication(ServerRequest serverRequest) {
+        String token = serverRequest.exchange().getAttribute(TOKEN_ATTR);
         return loanApplicationServicePort.calculateCapacityLoanApplication(
                         Long.parseLong(serverRequest.pathVariable("idLoanApplication")),
                         token)
@@ -82,10 +84,10 @@ public class HandlerLoanApplication {
                         .bodyValue(response));
     }
 
-    public Mono<ServerResponse> GetHealth(ServerRequest ignored) {
+    public Mono<ServerResponse> getHealth() {
         return healthChecker.isDatabaseUp()
                 .flatMap(isUp -> {
-                    if (isUp) {
+                    if (Boolean.TRUE.equals(isUp)) {
                         return ServerResponse.ok()
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .bodyValue(Map.of("status", "UP", "database", "UP"));
@@ -97,7 +99,7 @@ public class HandlerLoanApplication {
                 });
     }
 
-    public Mono<ServerResponse> GetLiveness(ServerRequest ignoredServerRequest) {
+    public Mono<ServerResponse> getLiveness() {
         return ServerResponse.ok()
                 .contentType(MediaType.TEXT_PLAIN)
                 .bodyValue("OK");

@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoanApplicationPaymentDto {
+    @JsonProperty("id")
     private Long id;
 
     @JsonProperty("state")

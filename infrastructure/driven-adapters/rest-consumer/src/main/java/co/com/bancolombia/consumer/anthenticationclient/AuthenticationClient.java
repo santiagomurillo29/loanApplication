@@ -3,7 +3,7 @@ package co.com.bancolombia.consumer.anthenticationclient;
 import co.com.bancolombia.consumer.anthenticationclient.mapper.RestConsumerMapper;
 import co.com.bancolombia.consumer.anthenticationclient.model.UserResponseDto;
 import co.com.bancolombia.consumer.exception.WebClientException;
-import co.com.bancolombia.model.loanapplication.gateways.AuthenticationClientPersistencePort;
+import co.com.bancolombia.model.loanapplication.gateways.AuthenticationClientPort;
 import co.com.bancolombia.model.loanapplication.globalmessage.GlobalMessage;
 import co.com.bancolombia.model.loanapplication.model.restconsumer.UserResponse;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import reactor.core.publisher.Mono;
 @Component
 @RequiredArgsConstructor
 @Setter
-public class AuthenticationClient implements AuthenticationClientPersistencePort {
+public class AuthenticationClient implements AuthenticationClientPort {
 
     private final WebClient.Builder webClientBuilder;
     private final RestConsumerMapper restConsumerMapper;

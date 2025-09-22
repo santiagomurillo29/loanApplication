@@ -1,9 +1,9 @@
 package co.com.bancolombia.usecase.loanapplication;
 
-import co.com.bancolombia.model.loanapplication.gateways.AuthenticationClientPersistencePort;
+import co.com.bancolombia.model.loanapplication.gateways.AuthenticationClientPort;
 import co.com.bancolombia.model.loanapplication.gateways.LoanApplicationPersistencePort;
 import co.com.bancolombia.model.loanapplication.gateways.LoanTypePersistencePort;
-import co.com.bancolombia.model.loanapplication.gateways.SQSSenderPersistencePort;
+import co.com.bancolombia.model.loanapplication.gateways.SQSSenderPort;
 import co.com.bancolombia.model.loanapplication.gateways.StatePersistencePort;
 import co.com.bancolombia.model.loanapplication.gateways.TokenAuthSecurityPort;
 import co.com.bancolombia.model.loanapplication.globalmessage.GlobalMessage;
@@ -34,13 +34,13 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
-public class LoanApplicationUseCaseTest {
+class LoanApplicationUseCaseTest {
 
     @Mock
     LoanApplicationPersistencePort loanApplicationPersistencePort;
 
     @Mock
-    AuthenticationClientPersistencePort authenticationClientPersistencePort;
+    AuthenticationClientPort authenticationClientPort;
 
     @Mock
     TokenAuthSecurityPort tokenAuthSecurityPort;
@@ -52,7 +52,7 @@ public class LoanApplicationUseCaseTest {
     LoanTypePersistencePort loanTypePersistencePort;
 
     @Mock
-    SQSSenderPersistencePort sqsSenderPersistencePort;
+    SQSSenderPort sqsSenderPort;
 
     @InjectMocks
     LoanApplicationUseCase useCase;
@@ -66,7 +66,7 @@ public class LoanApplicationUseCaseTest {
         LoanApplicationModel model = new LoanApplicationModel(1L, BigDecimal.valueOf(30000.00), 24, "user@gmail.com", null, loanTypeModel);
 
         given(tokenAuthSecurityPort.getSubject(token)).willReturn(Mono.just("user@gmail.com"));
-        given(authenticationClientPersistencePort.validateEmailExists(model.getEmail(), token)).willReturn(Mono.just(true));
+        given(authenticationClientPort.validateEmailExists(model.getEmail(), token)).willReturn(Mono.just(true));
         given(loanTypePersistencePort.findLoanTypeById(1L)).willReturn(Mono.just(loanTypeModel));
         given(statePersistencePort.findStateByName("PENDING")).willReturn(Mono.just(stateModel));
         given(loanApplicationPersistencePort.saveLoanApplication(model)).willReturn(Mono.just(model));
@@ -82,7 +82,7 @@ public class LoanApplicationUseCaseTest {
         LoanApplicationModel model = new LoanApplicationModel(1L, BigDecimal.valueOf(30000.00), 24, "user@gmail.com", null, loanTypeModel);
 
         given(tokenAuthSecurityPort.getSubject(token)).willReturn(Mono.just("user@gmail.com"));
-        given(authenticationClientPersistencePort.validateEmailExists(model.getEmail(), token)).willReturn(Mono.just(false));
+        given(authenticationClientPort.validateEmailExists(model.getEmail(), token)).willReturn(Mono.just(false));
 
         StepVerifier.create(useCase.createLoanApplication(model, token))
                 .expectErrorSatisfies(error -> { assertInstanceOf(BusinessException.class, error);
@@ -117,7 +117,7 @@ public class LoanApplicationUseCaseTest {
 
         given(tokenAuthSecurityPort.getSubject(token)).willReturn(Mono.just("user@gmail.com"));
         given(loanApplicationPersistencePort.findLoanApplicationsByStates(0, 10, List.of("PENDING"))).willReturn(Mono.just(pageLoanApplicationModel));
-        given(authenticationClientPersistencePort.getUserByEmail("user@gmail.com", token)).willReturn(Mono.just(userResponse));
+        given(authenticationClientPort.getUserByEmail("user@gmail.com", token)).willReturn(Mono.just(userResponse));
 
         StepVerifier.create(useCase.findLoanApplicationPending(0, 10, List.of("PENDING"), token))
                 .assertNext(result -> {
@@ -151,7 +151,7 @@ public class LoanApplicationUseCaseTest {
         given(statePersistencePort.findStateByName(stateName)).willReturn(Mono.just(newState));
         given(loanApplicationPersistencePort.findLoanApplicationById(idLoanApplication)).willReturn(Mono.just(existing));
         given(loanApplicationPersistencePort.saveLoanApplication(any())).willReturn(Mono.just(updated));
-        given(sqsSenderPersistencePort.sendState(any(LoanApplicationState.class))).willReturn(Mono.empty());
+        given(sqsSenderPort.sendState(any(LoanApplicationState.class))).willReturn(Mono.empty());
 
         StepVerifier.create(useCase.updateLoanApplication(idLoanApplication, stateName, token))
                 .expectNextMatches(saved -> saved.getState().getName().equals("APPROVED"))
@@ -171,8 +171,8 @@ public class LoanApplicationUseCaseTest {
 
         given(tokenAuthSecurityPort.getSubject(token)).willReturn(Mono.just("user@gmail.com"));
         given(loanApplicationPersistencePort.findLoanApplicationsByStates(page, size, states)).willReturn(Mono.just(pageModel));
-        given(authenticationClientPersistencePort.getUserByEmail("user1@gmail.com", token)).willReturn(Mono.just(user1));
-        given(authenticationClientPersistencePort.getUserByEmail("user2@gmail.com", token)).willReturn(Mono.just(user2));
+        given(authenticationClientPort.getUserByEmail("user1@gmail.com", token)).willReturn(Mono.just(user1));
+        given(authenticationClientPort.getUserByEmail("user2@gmail.com", token)).willReturn(Mono.just(user2));
 
         StepVerifier.create(useCase.findLoanApplicationPending(page, size, states, token))
                 .assertNext(result -> {
@@ -203,11 +203,11 @@ public class LoanApplicationUseCaseTest {
         given(tokenAuthSecurityPort.getSubject(token)).willReturn(Mono.just(email));
         given(loanApplicationPersistencePort.findLoanApplicationById(idLoan)).willReturn(Mono.just(loanApp));
         given(loanTypePersistencePort.findLoanTypeById(loanType.getIdLoanType())).willReturn(Mono.just(loanType));
-        given(authenticationClientPersistencePort.getUserByEmail(email, token)).willReturn(Mono.just(user));
+        given(authenticationClientPort.getUserByEmail(email, token)).willReturn(Mono.just(user));
         given(loanApplicationPersistencePort.findApprovedLoansByEmail(email)).willReturn(Flux.empty());
         given(statePersistencePort.findStateByName(anyString())).willReturn(Mono.just(stateModel));
         given(loanApplicationPersistencePort.saveLoanApplication(any())).willReturn(Mono.just(savedLoan));
-        given(sqsSenderPersistencePort.sendPayment(any(LoanApplicationPayment.class))).willReturn(Mono.empty());
+        given(sqsSenderPort.sendPayment(any(LoanApplicationPayment.class))).willReturn(Mono.empty());
 
         StepVerifier.create(useCase.calculateCapacityLoanApplication(idLoan, token))
                 .expectNextMatches(result -> result.getState().getName().equals("APPROVED"))

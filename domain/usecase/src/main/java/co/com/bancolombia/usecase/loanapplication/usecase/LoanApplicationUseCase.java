@@ -1,9 +1,9 @@
 package co.com.bancolombia.usecase.loanapplication.usecase;
 
-import co.com.bancolombia.model.loanapplication.gateways.AuthenticationClientPersistencePort;
+import co.com.bancolombia.model.loanapplication.gateways.AuthenticationClientPort;
 import co.com.bancolombia.model.loanapplication.gateways.LoanApplicationPersistencePort;
 import co.com.bancolombia.model.loanapplication.gateways.LoanTypePersistencePort;
-import co.com.bancolombia.model.loanapplication.gateways.SQSSenderPersistencePort;
+import co.com.bancolombia.model.loanapplication.gateways.SQSSenderPort;
 import co.com.bancolombia.model.loanapplication.gateways.StatePersistencePort;
 import co.com.bancolombia.model.loanapplication.gateways.TokenAuthSecurityPort;
 import co.com.bancolombia.model.loanapplication.globalmessage.GlobalMessage;
@@ -15,22 +15,29 @@ import co.com.bancolombia.model.loanapplication.model.sqs.LoanApplicationState;
 import co.com.bancolombia.usecase.loanapplication.exception.BusinessException;
 import co.com.bancolombia.usecase.loanapplication.usecase.api.LoanApplicationServicePort;
 import co.com.bancolombia.usecase.loanapplication.usecase.businessoperation.BusinessOperation;
-import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
-@RequiredArgsConstructor
 public class LoanApplicationUseCase implements LoanApplicationServicePort {
 
     private final TokenAuthSecurityPort tokenAuthSecurityPort;
     private final LoanApplicationPersistencePort loanApplicationPersistencePort;
     private final StatePersistencePort statePersistencePort;
     private final LoanTypePersistencePort loanTypePersistencePort;
-    private final AuthenticationClientPersistencePort authenticationClientPersistencePort;
-    private final SQSSenderPersistencePort sqsSenderPersistencePort;
+    private final AuthenticationClientPort authenticationClientPort;
+    private final SQSSenderPort sqsSenderPort;
+
+    public LoanApplicationUseCase(TokenAuthSecurityPort tokenAuthSecurityPort, LoanApplicationPersistencePort loanApplicationPersistencePort, StatePersistencePort statePersistencePort, LoanTypePersistencePort loanTypePersistencePort, AuthenticationClientPort authenticationClientPort, SQSSenderPort sqsSenderPort) {
+        this.tokenAuthSecurityPort = tokenAuthSecurityPort;
+        this.loanApplicationPersistencePort = loanApplicationPersistencePort;
+        this.statePersistencePort = statePersistencePort;
+        this.loanTypePersistencePort = loanTypePersistencePort;
+        this.authenticationClientPort = authenticationClientPort;
+        this.sqsSenderPort = sqsSenderPort;
+    }
 
     @Override
     public Mono<LoanApplicationModel> createLoanApplication(LoanApplicationModel loanApplicationModel, String token) {
@@ -39,9 +46,9 @@ public class LoanApplicationUseCase implements LoanApplicationServicePort {
                     if (!loanApplicationModel.getEmail().equalsIgnoreCase(userEmailFromToken)) {
                         return Mono.error(new BusinessException(GlobalMessage.EMAIL_NOT_MATCH));
                     }
-                    return authenticationClientPersistencePort.validateEmailExists(loanApplicationModel.getEmail(), token)
+                    return authenticationClientPort.validateEmailExists(loanApplicationModel.getEmail(), token)
                             .flatMap(exists -> {
-                                if (!exists) {
+                                if (Boolean.FALSE.equals(exists)) {
                                     return Mono.error(new BusinessException(GlobalMessage.NOT_FOUND_EMAIL));
                                 }
                                 return loanTypePersistencePort.findLoanTypeById(
@@ -77,11 +84,10 @@ public class LoanApplicationUseCase implements LoanApplicationServicePort {
                                                                     saved.getIdLoanApplication(),
                                                                     saved.getState().getName(),
                                                                     saved.getEmail(),
-                                                                    "STATUS"
+                                                                    "STATUS",
+                                                                    saved.getAmount()
                                                             );
-                                                            System.out.println("event = " + event);
-
-                                                            return sqsSenderPersistencePort.sendState(event)
+                                                            return sqsSenderPort.sendState(event)
                                                                     .thenReturn(saved);
                                                         });
                                             })
@@ -98,12 +104,12 @@ public class LoanApplicationUseCase implements LoanApplicationServicePort {
                                         loanTypePersistencePort.findLoanTypeById(loanApplication.getLoanType().getIdLoanType())
                                                 .switchIfEmpty(Mono.error(new BusinessException(GlobalMessage.NOT_FOUND_LOAN_TYPE)))
                                                 .flatMap(loanType -> {
-                                                    if (!loanType.getAutoValidation()) {
+                                                    if (Boolean.FALSE.equals(loanType.getAutoValidation())) {
                                                         return Mono.error(new BusinessException(GlobalMessage.AUTO_VALIDATION_NOT_ALLOWED));
                                                     }
                                                     loanApplication.setLoanType(loanType);
 
-                                                    return authenticationClientPersistencePort.getUserByEmail(loanApplication.getEmail(), token)
+                                                    return authenticationClientPort.getUserByEmail(loanApplication.getEmail(), token)
                                                             .flatMap(user -> {
                                                                 BigDecimal income = user.getBaseSalaryUser();
                                                                 BigDecimal maximumCapacity = BusinessOperation.calculateMaximumCapacity(income);
@@ -153,8 +159,7 @@ public class LoanApplicationUseCase implements LoanApplicationServicePort {
                                                                                                             loanApplication.getTerm(),
                                                                                                             "PLAN"
                                                                                                     );
-                                                                                                    System.out.println("event = " + event);
-                                                                                                    return sqsSenderPersistencePort.sendPayment(event)
+                                                                                                    return sqsSenderPort.sendPayment(event)
                                                                                                             .thenReturn(saved);
                                                                                                 });
                                                                                     });
@@ -174,7 +179,7 @@ public class LoanApplicationUseCase implements LoanApplicationServicePort {
                                     List<LoanApplicationModel> content = pageModel.getContent();
                                     return Flux.fromIterable(content)
                                             .flatMap(loanApp ->
-                                                    authenticationClientPersistencePort.getUserByEmail(loanApp.getEmail(), token)
+                                                    authenticationClientPort.getUserByEmail(loanApp.getEmail(), token)
                                                             .map(user -> {
                                                                 BigDecimal monthly = loanApp.getAmount().divide(BigDecimal.valueOf(loanApp.getTerm()), RoundingMode.HALF_UP);
                                                                 return new LoanApplicationPendingModel(loanApp, user.getNameUser(), user.getBaseSalaryUser(), monthly);

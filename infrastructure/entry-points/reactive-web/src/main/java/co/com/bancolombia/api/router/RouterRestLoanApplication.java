@@ -31,7 +31,7 @@ public class RouterRestLoanApplication {
                     path = "/api/v1/solicitud",
                     method = RequestMethod.GET,
                     beanClass = HandlerLoanApplication.class,
-                    beanMethod = "GetLoanApplication",
+                    beanMethod = "getLoanApplication",
                     operation = @Operation(
                             operationId = "getLoanApplications",
                             summary = "Get all loan applications",
@@ -40,21 +40,18 @@ public class RouterRestLoanApplication {
                                             name = "page",
                                             description = "Page number",
                                             in = ParameterIn.QUERY,
-                                            required = false,
                                             schema = @Schema(type = "integer", defaultValue = "0")
                                     ),
                                     @Parameter(
                                             name = "size",
                                             description = "Page size",
                                             in = ParameterIn.QUERY,
-                                            required = false,
                                             schema = @Schema(type = "integer", defaultValue = "10")
                                     ),
                                     @Parameter(
                                             name = "state",
                                             description = "Loan state(s)",
                                             in = ParameterIn.QUERY,
-                                            required = false,
                                             schema = @Schema(type = "string", example = "PENDING")
                                     )
                             },
@@ -67,7 +64,7 @@ public class RouterRestLoanApplication {
                     path = "/api/v1/solicitudes",
                     method = RequestMethod.POST,
                     beanClass = HandlerLoanApplication.class,
-                    beanMethod = "CreateLoanApplication",
+                    beanMethod = "createLoanApplication",
                     consumes = "application/json",
                     produces = "application/json",
                     operation = @Operation(
@@ -97,7 +94,7 @@ public class RouterRestLoanApplication {
                     path = "/api/v1/solicitud/{idLoanApplication}",
                     method = RequestMethod.PUT,
                     beanClass = HandlerLoanApplication.class,
-                    beanMethod = "UpdateLoanApplication",
+                    beanMethod = "updateLoanApplication",
                     consumes = "application/json",
                     produces = "application/json",
                     operation = @Operation(
@@ -137,7 +134,7 @@ public class RouterRestLoanApplication {
                     path = "/api/v1/calcular-capacidad/{idLoanApplication}",
                     method = RequestMethod.POST,
                     beanClass = HandlerLoanApplication.class,
-                    beanMethod = "CalculateCapacityLoanApplication",
+                    beanMethod = "calculateCapacityLoanApplication",
                     consumes = "application/json",
                     produces = "application/json",
                     operation = @Operation(
@@ -169,7 +166,7 @@ public class RouterRestLoanApplication {
                     path = "/health",
                     method = RequestMethod.GET,
                     beanClass = HandlerLoanApplication.class,
-                    beanMethod = "GetHealth",
+                    beanMethod = "getHealth",
                     produces = "application/json",
                     operation = @Operation(
                             operationId = "getHealth",
@@ -199,7 +196,7 @@ public class RouterRestLoanApplication {
                     path = "/liveness",
                     method = RequestMethod.GET,
                     beanClass = HandlerLoanApplication.class,
-                    beanMethod = "GetLiveness",
+                    beanMethod = "getLiveness",
                     produces = "text/plain",
                     operation = @Operation(
                             operationId = "getLiveness",
@@ -219,11 +216,11 @@ public class RouterRestLoanApplication {
             )
     })
     public RouterFunction<ServerResponse> routerFunction(HandlerLoanApplication handlerLoanApplication) {
-        return route(GET("/api/v1/solicitud"), handlerLoanApplication::GetLoanApplication)
-                .andRoute(GET("/health"), handlerLoanApplication::GetHealth)
-                .andRoute(GET("/liveness"), handlerLoanApplication::GetLiveness)
-                .andRoute(POST("/api/v1/solicitudes"), handlerLoanApplication::CreateLoanApplication)
-                .andRoute(POST("/api/v1/calcular-capacidad/{idLoanApplication}"), handlerLoanApplication::CalculateCapacityLoanApplication)
-                .andRoute(PUT("/api/v1/solicitud/{idLoanApplication}"), handlerLoanApplication::UpdateLoanApplication);
+        return route(GET("/api/v1/solicitud"), handlerLoanApplication::getLoanApplication)
+                .andRoute(GET("/health"), request -> handlerLoanApplication.getHealth())
+                .andRoute(GET("/liveness"), request -> handlerLoanApplication.getLiveness())
+                .andRoute(POST("/api/v1/solicitudes"), handlerLoanApplication::createLoanApplication)
+                .andRoute(POST("/api/v1/calcular-capacidad/{idLoanApplication}"), handlerLoanApplication::calculateCapacityLoanApplication)
+                .andRoute(PUT("/api/v1/solicitud/{idLoanApplication}"), handlerLoanApplication::updateLoanApplication);
     }
 }

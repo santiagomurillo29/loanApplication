@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 
 @Component
 public class LoanApplicationRowMapper {
-    public LoanApplicationModel map(Row row, RowMetadata metadata) {
+    public LoanApplicationModel map(Row row, RowMetadata ignored) {
         StateModel state = new StateModel(
                 row.get("state_id", Long.class),
                 row.get("state_name", String.class)
