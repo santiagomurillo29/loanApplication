@@ -1,14 +1,13 @@
 package co.com.bancolombia.r2dbc.repository;
 
 import co.com.bancolombia.model.loanapplication.model.LoanApplicationModel;
-import co.com.bancolombia.r2dbc.entity.LoanApplicationEntity;
-import co.com.bancolombia.r2dbc.mapper.LoanApplicationMapperR2dbc;
 import co.com.bancolombia.r2dbc.mapper.LoanApplicationRowMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
 import java.util.List;
 
 @Repository

@@ -1,24 +1,22 @@
 package co.com.bancolombia.authsecurity;
 
-import io.jsonwebtoken.Jwts;
 import co.com.bancolombia.authsecurity.jwt.provider.JwtProvider;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.util.ReflectionTestUtils;
 import reactor.test.StepVerifier;
 
 import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class JwtProviderTest {
+class JwtProviderTest {
 
     private JwtProvider jwtProvider;
     private final String secret = "mySecretKey123456789012345678901234";
@@ -31,19 +29,21 @@ public class JwtProviderTest {
         ReflectionTestUtils.setField(jwtProvider, "secret", secret);
     }
 
-    private String createTestToken(String username, List<String> roles) {
+    private String createTestToken(List<String> roles) {
+        Key key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject("testUser")
                 .claim("roles", roles)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
-                .signWith(SignatureAlgorithm.HS256, secret.getBytes(StandardCharsets.UTF_8))
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     @Test
     void shouldValidateTokenAndGetClaims() {
-        String token = createTestToken("testUser", List.of("ADMIN"));
+        String token = createTestToken(List.of("ADMIN"));
 
         StepVerifier.create(jwtProvider.validate(token))
                 .expectNext(true)
@@ -66,7 +66,7 @@ public class JwtProviderTest {
 
     @Test
     void shouldGetSubjectFromToken() {
-        String token = createTestToken("testUser", List.of("USER"));
+        String token = createTestToken(List.of("USER"));
 
         StepVerifier.create(jwtProvider.getSubject(token))
                 .assertNext(subject -> assertEquals("testUser", subject))

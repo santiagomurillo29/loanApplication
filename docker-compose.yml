@@ -20,14 +20,13 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
-      - "8082:80"
+      - "8083:80"
     networks:
       - spring-network
     depends_on:
       - postgres-loan
 
   loan_application:
-    image: loan_application
     container_name: loan_application
     build:
       context: .

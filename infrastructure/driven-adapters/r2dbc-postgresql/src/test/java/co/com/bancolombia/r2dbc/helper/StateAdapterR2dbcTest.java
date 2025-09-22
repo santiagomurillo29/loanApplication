@@ -4,12 +4,7 @@ import co.com.bancolombia.model.loanapplication.model.StateModel;
 import co.com.bancolombia.r2dbc.adapter.StateAdapterR2dbc;
 import co.com.bancolombia.r2dbc.entity.StateEntity;
 import co.com.bancolombia.r2dbc.health.R2dbcSafeExecutor;
-import co.com.bancolombia.r2dbc.mapper.LoanApplicationMapperR2dbc;
-import co.com.bancolombia.r2dbc.mapper.LoanTypeMapperR2dbc;
 import co.com.bancolombia.r2dbc.mapper.StateMapperR2dbc;
-import co.com.bancolombia.r2dbc.repository.LoanApplicationRepository;
-import co.com.bancolombia.r2dbc.repository.LoanApplicationRepositoryCustom;
-import co.com.bancolombia.r2dbc.repository.LoanTypeRepository;
 import co.com.bancolombia.r2dbc.repository.StateRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,13 +12,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
+
 import java.util.function.Supplier;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static reactor.test.StepVerifier.create;
 
 @ExtendWith(MockitoExtension.class)
-public class StateAdapterR2dbcTest {
+class StateAdapterR2dbcTest {
     @Mock private StateRepository stateRepository;
     @Mock private StateMapperR2dbc stateMapperR2dbc;
     @Mock private R2dbcSafeExecutor safeExecutor;

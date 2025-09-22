@@ -1,8 +1,6 @@
 package co.com.bancolombia.authsecurity.jwt.filter;
 
 import co.com.bancolombia.authsecurity.jwt.provider.JwtProvider;
-import co.com.bancolombia.model.loanapplication.globalmessage.GlobalMessage;
-import co.com.bancolombia.usecase.loanapplication.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -40,7 +38,9 @@ public class JwtFilter implements WebFilter {
                 path.startsWith("/swagger-ui") ||
                 path.startsWith("/v3/api-docs") ||
                 path.startsWith("/webjars") ||
-                path.equals("/favicon.ico")) {
+                path.equals("/favicon.ico") ||
+                path.equals("/health") ||
+                path.equals("/liveness")) {
             return chain.filter(exchange);
         }
 
@@ -55,7 +55,7 @@ public class JwtFilter implements WebFilter {
 
         return jwtProvider.validate(token)
                 .flatMap(valid -> {
-                    if (!valid) {
+                    if (Boolean.FALSE.equals(valid)) {
                         return authenticationEntryPoint.commence(exchange, new BadCredentialsException("invalid or expired token"));
                     }
 

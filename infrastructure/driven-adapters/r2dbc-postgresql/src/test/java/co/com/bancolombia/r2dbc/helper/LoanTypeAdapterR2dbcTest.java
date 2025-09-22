@@ -12,14 +12,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
+
 import java.math.BigDecimal;
 import java.util.function.Supplier;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static reactor.test.StepVerifier.create;
 
 @ExtendWith(MockitoExtension.class)
-public class LoanTypeAdapterR2dbcTest {
+class LoanTypeAdapterR2dbcTest {
     @Mock private LoanTypeRepository loanTypeRepository;
     @Mock private LoanTypeMapperR2dbc loanTypeMapperR2dbc;
     @Mock private R2dbcSafeExecutor safeExecutor;

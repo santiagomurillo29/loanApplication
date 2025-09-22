@@ -38,6 +38,7 @@ import static org.mockito.Mockito.when;
 @WebFluxTest
 @ImportAutoConfiguration(exclude = { org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration.class })
 @Import(HandlerLoanApplication.class)
+@SuppressWarnings("unused")
 class RouterRestLoanApplicationTest {
 
     @Autowired
@@ -63,8 +64,7 @@ class RouterRestLoanApplicationTest {
 
         given(validator.validate(any())).willReturn(Mono.just(request));
         given(mapper.toModelLoanApplication(any())).willReturn(model);
-        given(servicePort.createLoanApplication(any(LoanApplicationModel.class), any()))
-                .willReturn(Mono.just(model));
+        given(servicePort.createLoanApplication(any(LoanApplicationModel.class), any())).willReturn(Mono.just(model));
 
         given(mapper.toDtoLoanApplication(any())).willReturn(response);
 
@@ -180,5 +180,4 @@ class RouterRestLoanApplicationTest {
                 .expectBody(String.class)
                 .isEqualTo("OK");
     }
-
 }
